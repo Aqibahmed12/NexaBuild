@@ -2,11 +2,8 @@
 
 import streamlit as st
 import os
-import sys
-import time
 import base64
 import uuid
-import re
 import json
 
 # Import WebsiteGenerator to combine files for preview
@@ -38,67 +35,7 @@ page_icon = logo_path if logo_path else "⚡"
 st.set_page_config(page_title="NexaBuild", page_icon=page_icon, layout="wide", initial_sidebar_state="collapsed")
 
 # -------------------------------------------------------
-# 1. MOCK BACKEND SCRIPT (The Cloud Fix)
-# -------------------------------------------------------
-# This JavaScript intercepts API calls and saves data to the browser's LocalStorage.
-# It replaces the need for a Python Flask server.
-# MOCK_BACKEND_SCRIPT = """
-# <script>
-# (function() {
-#     console.log("⚡ NexaBuild Cloud Mode: Mock Backend Activated");
-#     const ORIGINAL_FETCH = window.fetch;
-#     const DB_PREFIX = 'nexabuild_db_';
-
-#     window.fetch = async (url, options) => {
-#         // Only intercept calls to our API
-#         if (!url.startsWith('/api/')) return ORIGINAL_FETCH(url, options);
-
-#         const parts = url.split('/').filter(p => p); // e.g., ['api', 'todos', '123']
-#         const collection = parts[1];
-#         const id = parts[2];
-#         const method = options?.method || 'GET';
-
-#         // Simulate network delay
-#         await new Promise(r => setTimeout(r, 50));
-
-#         // Load collection from LocalStorage
-#         let data = JSON.parse(localStorage.getItem(DB_PREFIX + collection) || '[]');
-
-#         // --- 1. GET (List) ---
-#         if (method === 'GET') {
-#             return new Response(JSON.stringify(data), {status: 200});
-#         } 
-        
-#         // --- 2. POST (Create/Update) ---
-#         if (method === 'POST') {
-#             const body = JSON.parse(options.body);
-#             // Generate ID if missing
-#             const newItem = { ...body, id: body.id || crypto.randomUUID() };
-            
-#             // Upsert logic
-#             const idx = data.findIndex(d => d.id === newItem.id);
-#             if (idx >= 0) data[idx] = newItem;
-#             else data.push(newItem);
-            
-#             localStorage.setItem(DB_PREFIX + collection, JSON.stringify(data));
-#             return new Response(JSON.stringify({status: "success", id: newItem.id, data: newItem}), {status: 200});
-#         }
-
-#         // --- 3. DELETE ---
-#         if (method === 'DELETE' && id) {
-#              data = data.filter(d => d.id !== id);
-#              localStorage.setItem(DB_PREFIX + collection, JSON.stringify(data));
-#              return new Response(JSON.stringify({status: "deleted"}), {status: 200});
-#         }
-
-#         return new Response("Not Found", {status: 404});
-#     };
-# })();
-# </script>
-# """
-
-# -------------------------------------------------------
-# 2. CSS & Styling
+# 1. CSS & Styling
 # -------------------------------------------------------
 def load_custom_css():
     st.markdown("""
@@ -243,14 +180,13 @@ def load_custom_css():
 load_custom_css()
 
 # -------------------------------------------------------
-# 3. Helper Functions
+# 2. Helper Functions
 # -------------------------------------------------------
 
 def sanitize_files(data):
     """
     Recursively flattens a nested dict of files (folders -> files) into a single dict
     mapping "path/to/file" -> "file contents as str".
-    This prevents errors like 'write() argument must be str' and handles bytes/other types.
     """
     flat_files = {}
 
@@ -280,7 +216,6 @@ def sanitize_files(data):
     if isinstance(data, dict):
         recurse(data, "")
     else:
-        # If it's not a dict, coerce to a single file
         recurse(data, "")
 
     return flat_files
@@ -293,7 +228,7 @@ if "project_meta" not in st.session_state: st.session_state.project_meta = {}
 if "session_id" not in st.session_state: st.session_state.session_id = str(uuid.uuid4())[:8]
 
 # -------------------------------------------------------
-# 4. UI Components
+# 3. UI Components
 # -------------------------------------------------------
 def render_header():
     # Default text logo
@@ -301,7 +236,6 @@ def render_header():
 
     # Check for logo in images directory
     if os.path.exists("images"):
-        # Find any file starting with 'logo' (e.g., logo.png, logo.jpg)
         logo_file = next((f for f in os.listdir("images") if f.lower().startswith("logo.")), None)
 
         if logo_file:
@@ -311,8 +245,6 @@ def render_header():
 
                 ext = logo_file.split('.')[-1].lower()
                 mime_type = f"image/{'svg+xml' if ext == 'svg' else ext}"
-
-                # Create HTML image tag
                 logo_html = f'<img src="data:{mime_type};base64,{encoded_string}" style="height: 40px; border-radius: 6px;"> NexaBuild'
             except Exception as e:
                 print(f"Error loading logo: {e}")
@@ -340,7 +272,7 @@ def render_footer():
     """, unsafe_allow_html=True)
 
 # -------------------------------------------------------
-# 5. Page: Home
+# 4. Page: Home
 # -------------------------------------------------------
 def render_home():
     render_header()
@@ -367,7 +299,6 @@ def render_home():
         with st.form("create_form"):
             prompt = st.text_area("Describe your project", height=150,
                                   placeholder="E.g., A Todo app where I can add, delete and save tasks permanently.")
-            # Removed use_container_width for compatibility across Streamlit versions
             submitted = st.form_submit_button("🚀 Launch Team")
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -377,12 +308,11 @@ def render_home():
                 try:
                     result = manager.create_website(prompt)
                     if result:
-                        # Sanitize files immediately
                         clean_files = sanitize_files(result.get("files", {}))
                         st.session_state.files = clean_files
                         st.session_state.project_meta = {"plan": result.get("plan"), "design": result.get("design")}
                         st.session_state.chat.extend(
-                            [("user", prompt), ("ai", "Project ready! Mock Backend Attached.")])
+                            [("user", prompt), ("ai", "Project ready! JavaScript Logic Generated.")])
                         st.session_state.page = "workspace"
                         st.rerun()
                 except Exception as e:
@@ -390,7 +320,7 @@ def render_home():
     render_footer()
 
 # -------------------------------------------------------
-# 6. Page: Workspace
+# 5. Page: Workspace
 # -------------------------------------------------------
 def render_workspace():
     # Sanitize session state on load
@@ -420,7 +350,7 @@ def render_workspace():
                 st.info(f"You: {m}")
             else:
                 st.success(f"Team: {m}")
-        # Chat input — use simple pattern, ensure compatibility
+        
         chat_input_val = st.chat_input("Changes?") if hasattr(st, "chat_input") else st.text_input("Changes?")
         if chat_input_val:
             st.session_state.chat.append(("user", chat_input_val))
@@ -438,10 +368,9 @@ def render_workspace():
 
     t1, t2, t3 = st.tabs(["👁️ Preview", "💻 Code", "🚀 Deploy"])
     
-    # --- PREVIEW TAB (Cloud Compatible) ---
+    # --- PREVIEW TAB (Pure Static) ---
     with t1:
         if st.session_state.files:
-            # 1. Combine HTML, CSS, JS into one string
             try:
                 gen = WebsiteGenerator()
                 html_content = gen.combine_to_html(st.session_state.files)
@@ -450,18 +379,7 @@ def render_workspace():
                 html_content = None
 
             if html_content:
-                # 2. Inject Mock Backend Script
-                # This ensures API calls work without a backend server
-                try:
-                    if "</body>" in html_content:
-                        html_content = html_content.replace("</body>", f"{MOCK_BACKEND_SCRIPT}</body>")
-                    else:
-                        html_content += MOCK_BACKEND_SCRIPT
-
-                    # 3. Render static HTML in component iframe
-                    st.components.v1.html(html_content, height=800, scrolling=True)
-                except Exception as e:
-                    st.error(f"Error rendering preview: {e}")
+                st.components.v1.html(html_content, height=800, scrolling=True)
         else:
             st.warning("No files generated yet.")
 
@@ -475,7 +393,6 @@ def render_workspace():
                 try:
                     f_sel = st.radio("File", file_keys)
                 except Exception:
-                    # Fallback to a selectbox if radio fails for any reason
                     f_sel = st.selectbox("File", file_keys)
         with c_edit:
             if f_sel:
@@ -484,7 +401,6 @@ def render_workspace():
                     file_content = str(file_content)
 
                 new_code = st.text_area("Edit", file_content, height=600, key=f"e_{f_sel}")
-                # Use a dedicated key for save button to avoid collisions
                 if new_code != str(st.session_state.files.get(f_sel, "")) and st.button("Save", key=f"save_{f_sel}"):
                     st.session_state.files[f_sel] = new_code
                     st.rerun()
