@@ -34,7 +34,7 @@ def get_logo_path():
 logo_path = get_logo_path()
 page_icon = logo_path if logo_path else "⚡"
 
-st.set_page_config(page_title="NexaBuild Pro", page_icon=page_icon, layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="NexaBuild", page_icon=page_icon, layout="wide", initial_sidebar_state="collapsed")
 
 # -------------------------------------------------------
 # 1. MOCK BACKEND SCRIPT (The Cloud Fix)
