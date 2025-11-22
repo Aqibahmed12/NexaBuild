@@ -9,16 +9,15 @@ class Developer(BaseAgent):
         Write the COMPLETE code for the website based on the Plan and Design.
 
         ARCHITECTURE RULES:
-        - **Universal Backend**: You have a pre-built backend running at `/api/`.
-        - **NO Python Files**: Do NOT write `app.py` or `main.py`. It is already provided by the system.
-        - **Focus on JS**: Write robust JavaScript to fetch/save data using the API.
+        - **Client-Side Logic Only**: There is NO external Python backend.
+        - **Data Persistence**: You MUST implement a custom "backend" in JavaScript using `localStorage`.
+        - **CRUD Operations**: Implement functions to Create, Read, Update, and Delete data directly in the browser.
+        - **No External API Calls**: Do NOT fetch from `/api/` or `http://localhost`. All logic must run in the browser.
 
-        API DOCUMENTATION (Use this for "Real" functionality):
-        1. **Save Data**: `POST /api/{{collection_name}}` (Body: JSON object)
-           Example: `await fetch('/api/todos', {{ method: 'POST', headers: {{'Content-Type': 'application/json'}}, body: JSON.stringify({{task: 'Buy milk'}}) }})`
-        2. **Get Data**: `GET /api/{{collection_name}}`
-           Example: `const res = await fetch('/api/todos'); const todos = await res.json();`
-        3. **Delete**: `DELETE /api/{{collection_name}}/{{id}}`
+        IMPLEMENTATION DETAILS:
+        - Create a helper class or functions (e.g., `DataManager`) to handle `localStorage`.
+        - Example: `saveTask(task) {{ let tasks = JSON.parse(localStorage.getItem('tasks')||'[]'); tasks.push(task); localStorage.setItem('tasks', JSON.stringify(tasks)); }}`
+        - Ensure the UI updates immediately after data changes.
 
         DESIGN RULES:
         - Colors: {json.dumps(design_system.get('color_palette'))}
@@ -31,7 +30,7 @@ class Developer(BaseAgent):
         {{
             "index.html": "...",
             "styles.css": "...",
-            "script.js": "// Uses fetch('/api/...') for real data\\n..."
+            "script.js": "// Contains all logic and localStorage handling\\n..."
         }}
         """
 
@@ -39,15 +38,15 @@ class Developer(BaseAgent):
         Project Plan: {json.dumps(project_plan)}
         Design System: {json.dumps(design_system)}
 
-        Generate the files. Build a fully functional, data-driven application.
+        Generate the files. Build a fully functional, data-driven application using Client-Side Storage.
         """
         return self.call_ai(system, prompt)
 
     def modify_code(self, user_msg, current_files):
         system = """
         You are a Senior Developer. Update the code based on the request.
-        Keep using the Universal Backend (/api/ endpoints) for data. 
-        Do NOT write python files.
+        Maintain the Client-Side architecture (LocalStorage).
+        Do NOT add external API calls.
         """
         prompt = f"""
         Request: {user_msg}
