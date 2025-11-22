@@ -134,6 +134,22 @@ def load_custom_css():
             border: none; 
             font-weight: bold; 
         }
+
+        .footer-container {
+            margin-top: 50px;
+            padding: 30px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            background: var(--card-bg);
+            font-size: 0.9rem;
+        }
+        .footer-link {
+            color: var(--neon-cyan);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        
         .server-indicator { 
             padding: 5px 10px; 
             border-radius: 4px; 
