@@ -116,17 +116,36 @@ def load_custom_css():
             font-family: 'Consolas', monospace !important; 
             border: 1px solid #30363d !important; 
         }
-        .nav-container { 
-            border-bottom: 1px solid #30363d; 
-            padding: 15px; 
-            margin-bottom: 20px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            background: rgba(22, 27, 34, 0.95);
-            position: sticky;
-            top: 0;
-            z-index: 999;
+        /* --- Navbar/Footer Styling --- */
+        .nav-container {
+            background: rgba(22, 27, 34, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover {
+            color: var(--neon-cyan);
         }
         .stButton > button { 
             background: var(--neon-cyan) !important; 
