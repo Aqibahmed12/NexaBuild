@@ -7,6 +7,7 @@ import time
 import base64
 import uuid
 import re
+import json
 
 # Import WebsiteGenerator to combine files for preview
 from ai.utils import create_zip_bytes, WebsiteGenerator 
@@ -161,15 +162,41 @@ load_custom_css()
 
 def sanitize_files(data):
     """
-    Recursively flattens JSON to fix the 'write() argument must be str' error.
+    Recursively flattens a nested dict of files (folders -> files) into a single dict
+    mapping "path/to/file" -> "file contents as str".
+    This prevents errors like 'write() argument must be str' and handles bytes/other types.
     """
     flat_files = {}
+
+    def recurse(obj, path=""):
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                new_path = f"{path}/{k}" if path else k
+                recurse(v, new_path)
+        else:
+            # Convert non-string content to string safely
+            if isinstance(obj, (bytes, bytearray)):
+                try:
+                    content = obj.decode("utf-8")
+                except Exception:
+                    content = obj.decode("utf-8", "replace")
+            elif isinstance(obj, str):
+                content = obj
+            else:
+                try:
+                    content = json.dumps(obj)
+                except Exception:
+                    content = str(obj)
+            # if path is empty generate a unique name
+            key = path or f"file_{uuid.uuid4().hex[:8]}"
+            flat_files[key] = content
+
     if isinstance(data, dict):
-        for key, value in data.items():
-            if isinstance(value, str):
-                flat_files[key] = value
-            elif isinstance(value, dict):
-                flat_files.update(sanitize_files(value))
+        recurse(data, "")
+    else:
+        # If it's not a dict, coerce to a single file
+        recurse(data, "")
+
     return flat_files
 
 # Session State
@@ -191,8 +218,9 @@ def render_header():
             ext = logo_path.split('.')[-1].lower()
             mime = "image/svg+xml" if ext == "svg" else f"image/{ext}"
             logo_html = f'<img src="data:{mime};base64,{b64}" style="height:35px; vertical-align:middle; border-radius: 4px;"> NexaBuild'
-        except:
-            pass
+        except Exception:
+            # Safe fallback to text logo
+            logo_html = "⚡ NexaBuild"
     st.markdown(
         f"""<div class="nav-container"><div style="font-size:1.5rem; color:white;">{logo_html}</div><div><a href="#" style="color:#00f3ff;">NexaChat</a></div></div>""",
         unsafe_allow_html=True)
@@ -232,7 +260,8 @@ def render_home():
         with st.form("create_form"):
             prompt = st.text_area("Describe your project", height=150,
                                   placeholder="E.g., A Todo app where I can add, delete and save tasks permanently.")
-            submitted = st.form_submit_button("🚀 Launch Team", use_container_width=True)
+            # Removed use_container_width for compatibility across Streamlit versions
+            submitted = st.form_submit_button("🚀 Launch Team")
         st.markdown("</div>", unsafe_allow_html=True)
 
         if submitted and prompt:
@@ -242,9 +271,9 @@ def render_home():
                     result = manager.create_website(prompt)
                     if result:
                         # Sanitize files immediately
-                        clean_files = sanitize_files(result["files"])
+                        clean_files = sanitize_files(result.get("files", {}))
                         st.session_state.files = clean_files
-                        st.session_state.project_meta = {"plan": result["plan"], "design": result["design"]}
+                        st.session_state.project_meta = {"plan": result.get("plan"), "design": result.get("design")}
                         st.session_state.chat.extend(
                             [("user", prompt), ("ai", "Project ready! Mock Backend Attached.")])
                         st.session_state.page = "workspace"
@@ -274,21 +303,31 @@ def render_workspace():
     with st.sidebar:
         st.subheader("💬 Chat")
         if st.session_state.project_meta:
-            with st.expander("Plan"): st.json(st.session_state.project_meta.get("plan"))
+            with st.expander("Plan"): 
+                try:
+                    st.json(st.session_state.project_meta.get("plan"))
+                except Exception:
+                    st.write(st.session_state.project_meta.get("plan"))
         for r, m in st.session_state.chat:
             if r == "user":
                 st.info(f"You: {m}")
             else:
                 st.success(f"Team: {m}")
-        if i := st.chat_input("Changes?"):
-            st.session_state.chat.append(("user", i))
+        # Chat input — use simple pattern, ensure compatibility
+        chat_input_val = st.chat_input("Changes?") if hasattr(st, "chat_input") else st.text_input("Changes?")
+        if chat_input_val:
+            st.session_state.chat.append(("user", chat_input_val))
             mgr = ProjectManager()
             with st.spinner("Coding..."):
-                if u := mgr.edit_website(i, st.session_state.files):
-                    clean_updates = sanitize_files(u)
-                    st.session_state.files.update(clean_updates)
-                    st.session_state.chat.append(("ai", "Updated."))
-                    st.rerun()
+                try:
+                    u = mgr.edit_website(chat_input_val, st.session_state.files)
+                    if u:
+                        clean_updates = sanitize_files(u)
+                        st.session_state.files.update(clean_updates)
+                        st.session_state.chat.append(("ai", "Updated."))
+                        st.rerun()
+                except Exception as e:
+                    st.error(f"Error during edit: {e}")
 
     t1, t2, t3 = st.tabs(["👁️ Preview", "💻 Code", "🚀 Deploy"])
     
@@ -296,18 +335,26 @@ def render_workspace():
     with t1:
         if st.session_state.files:
             # 1. Combine HTML, CSS, JS into one string
-            gen = WebsiteGenerator()
-            html_content = gen.combine_to_html(st.session_state.files)
-            
-            # 2. Inject Mock Backend Script
-            # This ensures API calls work without a backend server
-            if "</body>" in html_content:
-                html_content = html_content.replace("</body>", f"{MOCK_BACKEND_SCRIPT}</body>")
-            else:
-                html_content += MOCK_BACKEND_SCRIPT
-                
-            # 3. Render static HTML
-            st.components.v1.html(html_content, height=800, scrolling=True)
+            try:
+                gen = WebsiteGenerator()
+                html_content = gen.combine_to_html(st.session_state.files)
+            except Exception as e:
+                st.error(f"Error generating preview: {e}")
+                html_content = None
+
+            if html_content:
+                # 2. Inject Mock Backend Script
+                # This ensures API calls work without a backend server
+                try:
+                    if "</body>" in html_content:
+                        html_content = html_content.replace("</body>", f"{MOCK_BACKEND_SCRIPT}</body>")
+                    else:
+                        html_content += MOCK_BACKEND_SCRIPT
+
+                    # 3. Render static HTML in component iframe
+                    st.components.v1.html(html_content, height=800, scrolling=True)
+                except Exception as e:
+                    st.error(f"Error rendering preview: {e}")
         else:
             st.warning("No files generated yet.")
 
@@ -315,28 +362,42 @@ def render_workspace():
     with t2:
         c_list, c_edit = st.columns([1, 3])
         with c_list:
-            f_sel = st.radio("File", list(st.session_state.files.keys())) if st.session_state.files else None
+            file_keys = list(st.session_state.files.keys()) if st.session_state.files else []
+            f_sel = None
+            if file_keys:
+                try:
+                    f_sel = st.radio("File", file_keys)
+                except Exception:
+                    # Fallback to a selectbox if radio fails for any reason
+                    f_sel = st.selectbox("File", file_keys)
         with c_edit:
             if f_sel:
-                file_content = st.session_state.files[f_sel]
+                file_content = st.session_state.files.get(f_sel, "")
                 if not isinstance(file_content, str):
                     file_content = str(file_content)
 
                 new_code = st.text_area("Edit", file_content, height=600, key=f"e_{f_sel}")
-                if new_code != str(st.session_state.files[f_sel]) and st.button("Save"):
+                # Use a dedicated key for save button to avoid collisions
+                if new_code != str(st.session_state.files.get(f_sel, "")) and st.button("Save", key=f"save_{f_sel}"):
                     st.session_state.files[f_sel] = new_code
                     st.rerun()
     
     # --- DEPLOY TAB ---
     with t3:
         if st.session_state.files:
-            st.download_button("⬇️ ZIP", create_zip_bytes(st.session_state.files), "site.zip", "application/zip")
+            try:
+                zip_bytes = create_zip_bytes(st.session_state.files)
+                st.download_button("⬇️ ZIP", zip_bytes, "site.zip", "application/zip")
+            except Exception as e:
+                st.error(f"Error creating ZIP: {e}")
+
             repo = st.text_input("Repo Name", "nexa-site")
             tok = st.text_input("GitHub Token", type="password")
             if st.button("Deploy"):
                 try:
-                    st.success(
-                        f"Live: {GitHubDeployer(tok).deploy_to_github_pages(repo, st.session_state.files)['url']}")
+                    result = GitHubDeployer(tok).deploy_to_github_pages(repo, st.session_state.files)
+                    url = result.get("url") if isinstance(result, dict) else str(result)
+                    st.success(f"Live: {url}")
                 except Exception as e:
                     st.error(f"Error: {e}")
     render_footer()
