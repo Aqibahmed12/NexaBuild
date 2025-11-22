@@ -42,60 +42,60 @@ st.set_page_config(page_title="NexaBuild", page_icon=page_icon, layout="wide", i
 # -------------------------------------------------------
 # This JavaScript intercepts API calls and saves data to the browser's LocalStorage.
 # It replaces the need for a Python Flask server.
-MOCK_BACKEND_SCRIPT = """
-<script>
-(function() {
-    console.log("⚡ NexaBuild Cloud Mode: Mock Backend Activated");
-    const ORIGINAL_FETCH = window.fetch;
-    const DB_PREFIX = 'nexabuild_db_';
+# MOCK_BACKEND_SCRIPT = """
+# <script>
+# (function() {
+#     console.log("⚡ NexaBuild Cloud Mode: Mock Backend Activated");
+#     const ORIGINAL_FETCH = window.fetch;
+#     const DB_PREFIX = 'nexabuild_db_';
 
-    window.fetch = async (url, options) => {
-        // Only intercept calls to our API
-        if (!url.startsWith('/api/')) return ORIGINAL_FETCH(url, options);
+#     window.fetch = async (url, options) => {
+#         // Only intercept calls to our API
+#         if (!url.startsWith('/api/')) return ORIGINAL_FETCH(url, options);
 
-        const parts = url.split('/').filter(p => p); // e.g., ['api', 'todos', '123']
-        const collection = parts[1];
-        const id = parts[2];
-        const method = options?.method || 'GET';
+#         const parts = url.split('/').filter(p => p); // e.g., ['api', 'todos', '123']
+#         const collection = parts[1];
+#         const id = parts[2];
+#         const method = options?.method || 'GET';
 
-        // Simulate network delay
-        await new Promise(r => setTimeout(r, 50));
+#         // Simulate network delay
+#         await new Promise(r => setTimeout(r, 50));
 
-        // Load collection from LocalStorage
-        let data = JSON.parse(localStorage.getItem(DB_PREFIX + collection) || '[]');
+#         // Load collection from LocalStorage
+#         let data = JSON.parse(localStorage.getItem(DB_PREFIX + collection) || '[]');
 
-        // --- 1. GET (List) ---
-        if (method === 'GET') {
-            return new Response(JSON.stringify(data), {status: 200});
-        } 
+#         // --- 1. GET (List) ---
+#         if (method === 'GET') {
+#             return new Response(JSON.stringify(data), {status: 200});
+#         } 
         
-        // --- 2. POST (Create/Update) ---
-        if (method === 'POST') {
-            const body = JSON.parse(options.body);
-            // Generate ID if missing
-            const newItem = { ...body, id: body.id || crypto.randomUUID() };
+#         // --- 2. POST (Create/Update) ---
+#         if (method === 'POST') {
+#             const body = JSON.parse(options.body);
+#             // Generate ID if missing
+#             const newItem = { ...body, id: body.id || crypto.randomUUID() };
             
-            // Upsert logic
-            const idx = data.findIndex(d => d.id === newItem.id);
-            if (idx >= 0) data[idx] = newItem;
-            else data.push(newItem);
+#             // Upsert logic
+#             const idx = data.findIndex(d => d.id === newItem.id);
+#             if (idx >= 0) data[idx] = newItem;
+#             else data.push(newItem);
             
-            localStorage.setItem(DB_PREFIX + collection, JSON.stringify(data));
-            return new Response(JSON.stringify({status: "success", id: newItem.id, data: newItem}), {status: 200});
-        }
+#             localStorage.setItem(DB_PREFIX + collection, JSON.stringify(data));
+#             return new Response(JSON.stringify({status: "success", id: newItem.id, data: newItem}), {status: 200});
+#         }
 
-        // --- 3. DELETE ---
-        if (method === 'DELETE' && id) {
-             data = data.filter(d => d.id !== id);
-             localStorage.setItem(DB_PREFIX + collection, JSON.stringify(data));
-             return new Response(JSON.stringify({status: "deleted"}), {status: 200});
-        }
+#         // --- 3. DELETE ---
+#         if (method === 'DELETE' && id) {
+#              data = data.filter(d => d.id !== id);
+#              localStorage.setItem(DB_PREFIX + collection, JSON.stringify(data));
+#              return new Response(JSON.stringify({status: "deleted"}), {status: 200});
+#         }
 
-        return new Response("Not Found", {status: 404});
-    };
-})();
-</script>
-"""
+#         return new Response("Not Found", {status: 404});
+#     };
+# })();
+# </script>
+# """
 
 # -------------------------------------------------------
 # 2. CSS & Styling
