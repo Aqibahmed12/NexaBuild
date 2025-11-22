@@ -103,19 +103,36 @@ st.set_page_config(page_title="NexaBuild", page_icon=page_icon, layout="wide", i
 def load_custom_css():
     st.markdown("""
     <style>
-        :root { 
-            --bg-color: #0d1117; 
-            --card-bg: #161b22; 
-            --neon-cyan: #00f3ff; 
-            --vscode-bg: #1e1e1e; 
+        /* --- Global Variables --- */
+        :root {
+            --bg-color: #0d1117; /* GitHub Dark Dimmed */
+            --card-bg: #161b22;
+            --border-color: #30363d;
+            --neon-cyan: #00f3ff;
+            --neon-purple: #bc13fe;
+            --text-primary: #c9d1d9;
+            --text-white: #ffffff;
+            --vscode-bg: #1e1e1e;
+            --vscode-fg: #d4d4d4;
         }
-        .stApp { background-color: var(--bg-color); color: #c9d1d9; }
-        textarea { 
-            background-color: var(--vscode-bg) !important; 
-            color: #d4d4d4 !important; 
-            font-family: 'Consolas', monospace !important; 
-            border: 1px solid #30363d !important; 
+
+        /* --- Main Background --- */
+        .stApp {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
         }
+
+        /* --- Typography --- */
+        h1, h2, h3 {
+            color: var(--text-white) !important;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+        }
+        p, div, span {
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+        }
+
         /* --- Navbar/Footer Styling --- */
         .nav-container {
             background: rgba(22, 27, 34, 0.8);
@@ -147,12 +164,6 @@ def load_custom_css():
         .nav-links a:hover {
             color: var(--neon-cyan);
         }
-        .stButton > button { 
-            background: var(--neon-cyan) !important; 
-            color: #000000 !important; 
-            border: none; 
-            font-weight: bold; 
-        }
 
         .footer-container {
             margin-top: 50px;
@@ -168,27 +179,67 @@ def load_custom_css():
             font-weight: bold;
         }
 
-        
-        .server-indicator { 
-            padding: 5px 10px; 
-            border-radius: 4px; 
-            font-weight: bold; 
-            font-size: 0.8rem; 
+        /* --- VS Code Style Editor (Text Area) --- */
+        textarea {
+            background-color: var(--vscode-bg) !important;
+            color: var(--vscode-fg) !important;
+            font-family: 'Consolas', 'Courier New', monospace !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 4px !important;
+            padding: 10px !important;
         }
-        .on { background: rgba(0, 255, 0, 0.2); color: #00ff00; }
-        .off { background: rgba(255, 0, 0, 0.2); color: #ff4444; }
-        .footer {
-            background: rgba(22, 27, 34, 0.95);
-            padding: 15px;
-            text-align: center;
-            border-top: 1px solid #30363d;
-            color: #94a3b8;
-            font-size: 0.9rem;
+        /* Fix specific Streamlit Text Area Wrapper */
+        .stTextArea > div > div {
+            background-color: var(--vscode-bg);
+            border: 1px solid var(--border-color);
         }
-        .footer a { color: var(--neon-cyan); text-decoration: none; }
+
+        /* --- Chat Input & Standard Inputs --- */
+        .stTextInput input, .stChatInput textarea {
+            background-color: #0d1117 !important;
+            color: white !important;
+            border: 1px solid var(--border-color) !important;
+        }
+
+        /* --- Buttons (High Visibility) --- */
+        .stButton > button {
+            background: var(--neon-cyan) !important;
+            color: #000000 !important; /* Black text for contrast */
+            border: none;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        .stButton > button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        /* Secondary Button Style (if needed) */
+        div[data-testid="stHorizontalBlock"] button {
+            background: #21262d !important;
+            color: var(--neon-cyan) !important;
+            border: 1px solid var(--border-color) !important;
+        }
+        div[data-testid="stHorizontalBlock"] button:hover {
+            border-color: var(--neon-cyan) !important;
+        }
+
+        /* --- Glass Cards --- */
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* --- Sidebar --- */
+        [data-testid="stSidebar"] {
+            background-color: #010409;
+            border-right: 1px solid #30363d;
+        }
     </style>
     """, unsafe_allow_html=True)
-
 load_custom_css()
 
 # -------------------------------------------------------
