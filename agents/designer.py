@@ -9,10 +9,10 @@ class Designer(BaseAgent):
 
         FOCUS:
         1. **Aesthetics**: Neon effects, Glassmorphism, Smooth Animations, High Contrast (Dark Mode).
-        2. **Data States**: Since this is a real data-driven app using a backend, you MUST define specific styles for:
-           - **Loading States** (Spinners, skeletons, progress bars)
-           - **Empty States** (Beautiful placeholders when no data exists)
-           - **Feedback** (Success/Error toasts or alerts)
+        2. **Data States**: Since this is a dynamic client-side application, you MUST define specific styles for:
+           - **Loading States** (Spinners, skeletons, progress bars for async operations)
+           - **Empty States** (Beautiful placeholders when no local data exists)
+           - **Feedback** (Success/Error toasts or alerts for user actions)
 
         Output JSON format:
         {
