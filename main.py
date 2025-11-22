@@ -190,11 +190,11 @@ def render_header():
                 b64 = base64.b64encode(f.read()).decode()
             ext = logo_path.split('.')[-1].lower()
             mime = "image/svg+xml" if ext == "svg" else f"image/{ext}"
-            logo_html = f'<img src="data:{mime};base64,{b64}" style="height:35px; vertical-align:middle; border-radius: 4px;"> NexaBuild <b>Pro</b>'
+            logo_html = f'<img src="data:{mime};base64,{b64}" style="height:35px; vertical-align:middle; border-radius: 4px;"> NexaBuild'
         except:
             pass
     st.markdown(
-        f"""<div class="nav-container"><div style="font-size:1.5rem; color:white;">{logo_html}</div><div><a href="#" style="color:#00f3ff;">Upgrade</a></div></div>""",
+        f"""<div class="nav-container"><div style="font-size:1.5rem; color:white;">{logo_html}</div><div><a href="#" style="color:#00f3ff;">NexaChat</a></div></div>""",
         unsafe_allow_html=True)
 
 def render_footer():
