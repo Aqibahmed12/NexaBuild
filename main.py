@@ -210,25 +210,46 @@ if "session_id" not in st.session_state: st.session_state.session_id = str(uuid.
 # 4. UI Components
 # -------------------------------------------------------
 def render_header():
+    # Default text logo
     logo_html = "⚡ NexaBuild"
-    if logo_path:
-        try:
-            with open(logo_path, "rb") as f:
-                b64 = base64.b64encode(f.read()).decode()
-            ext = logo_path.split('.')[-1].lower()
-            mime = "image/svg+xml" if ext == "svg" else f"image/{ext}"
-            logo_html = f'<img src="data:{mime};base64,{b64}" style="height:35px; vertical-align:middle; border-radius: 4px;"> NexaBuild'
-        except Exception:
-            # Safe fallback to text logo
-            logo_html = "⚡ NexaBuild"
-    st.markdown(
-        f"""<div class="nav-container"><div style="font-size:1.5rem; color:white;">{logo_html}</div><div><a href="#" style="color:#00f3ff;">NexaChat</a></div></div>""",
-        unsafe_allow_html=True)
+
+    # Check for logo in images directory
+    if os.path.exists("images"):
+        # Find any file starting with 'logo' (e.g., logo.png, logo.jpg)
+        logo_file = next((f for f in os.listdir("images") if f.lower().startswith("logo.")), None)
+
+        if logo_file:
+            try:
+                with open(os.path.join("images", logo_file), "rb") as f:
+                    encoded_string = base64.b64encode(f.read()).decode()
+
+                ext = logo_file.split('.')[-1].lower()
+                mime_type = f"image/{'svg+xml' if ext == 'svg' else ext}"
+
+                # Create HTML image tag
+                logo_html = f'<img src="data:{mime_type};base64,{encoded_string}" style="height: 40px; border-radius: 6px;"> NexaBuild'
+            except Exception as e:
+                print(f"Error loading logo: {e}")
+
+    st.markdown(f"""
+    <div class="nav-container">
+        <div class="nav-logo">{logo_html}</div>
+        <div class="nav-links">
+            <a href="#">Home</a>
+            <a href="#">Features</a>
+            <a href="#">About</a>
+            <a href="mailto:@gmail.com" style="color: var(--neon-cyan); border: 1px solid var(--neon-cyan); padding: 5px 10px; border-radius: 5px;">Contact Us</a>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
 
 def render_footer():
     st.markdown("""
-    <div class="footer">
-        &copy; 2025 NexaBuild Pro • Built with <a href="#">AI</a> • All rights reserved.
+    <div class="footer-container">
+        <p>Built with ❤️ using Gemini AI</p>
+        <p>Need help? <a href="mailto:nexabuild@gmail.com" class="footer-link">Contact Support (nexabuild@gmail.com)</a></p>
+        <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">© 2025 NexaBuild. All rights reserved.</p>
     </div>
     """, unsafe_allow_html=True)
 
