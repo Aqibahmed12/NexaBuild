@@ -10,6 +10,7 @@ import json
 from ai.utils import create_zip_bytes, WebsiteGenerator 
 from ai.deploy import GitHubDeployer
 from agents.manager import ProjectManager
+from ai.chatbot import NexaBot
 
 # -------------------------------------------------------
 # 0. Asset Helper & Config
@@ -226,6 +227,7 @@ if "page" not in st.session_state: st.session_state.page = "home"
 if "chat" not in st.session_state: st.session_state.chat = []
 if "project_meta" not in st.session_state: st.session_state.project_meta = {}
 if "session_id" not in st.session_state: st.session_state.session_id = str(uuid.uuid4())[:8]
+if "nexabot_history" not in st.session_state: st.session_state.nexabot_history = []
 
 # -------------------------------------------------------
 # 3. UI Components
@@ -249,17 +251,56 @@ def render_header():
             except Exception as e:
                 print(f"Error loading logo: {e}")
 
+    # --- HEADER LAYOUT ---
+    c_nav, c_bot = st.columns([6, 1], gap="small")
+    
+with c_nav:
     st.markdown(f"""
     <div class="nav-container">
         <div class="nav-logo">{logo_html}</div>
         <div class="nav-links">
-            <a href="#">Home</a>
-            <a href="#">Features</a>
-            <a href="#">About</a>
+            <a href="#" style="color: var(--neon-cyan); border: 1px solid var(--neon-cyan); padding: 5px 10px; border-radius: 5px;">>Home</a>
+            <a href="#" style="color: var(--neon-cyan); border: 1px solid var(--neon-cyan); padding: 5px 10px; border-radius: 5px;">>About</a>
             <a href="mailto:@gmail.com" style="color: var(--neon-cyan); border: 1px solid var(--neon-cyan); padding: 5px 10px; border-radius: 5px;">Contact Us</a>
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    with c_bot:
+        # --- CHATBOT BUTTON (Popover) ---
+        with st.popover("🤖 Ask AI", use_container_width=True):
+            st.caption("Chat with NexaBot")
+            
+            # 1. Display History
+            for msg in st.session_state.nexabot_history:
+                role = msg["role"]
+                # Map 'model' role to 'assistant' for streamlit UI
+                ui_role = "assistant" if role == "model" else role
+                with st.chat_message(ui_role):
+                    st.write(msg["parts"])
+            
+            # 2. Chat Input
+            if prompt := st.chat_input("How can I help?"):
+                # Add user message to state
+                st.session_state.nexabot_history.append({"role": "user", "parts": prompt})
+                st.rerun() # Rerun to show user message immediately
+
+            # 3. Generate Response (if last message was user)
+            if st.session_state.nexabot_history and st.session_state.nexabot_history[-1]["role"] == "user":
+                with st.spinner("Thinking..."):
+                    try:
+                        bot = NexaBot()
+                        # Prepare history for Gemini (exclude the very last message which is the new prompt)
+                        # Gemini expects context, we send the new prompt as the 'query'
+                        history_context = st.session_state.nexabot_history[:-1]
+                        last_prompt = st.session_state.nexabot_history[-1]["parts"]
+                        
+                        response_text = bot.ask(last_prompt, history_context)
+                        
+                        st.session_state.nexabot_history.append({"role": "model", "parts": response_text})
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Error: {e}")
 
 
 def render_footer():
