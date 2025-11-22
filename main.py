@@ -1,28 +1,22 @@
-# main.py — Professional Agentic AI Website Builder (Universal Backend Version)
+# main.py — Professional Agentic AI Website Builder (Cloud Compatible Version)
 
 import streamlit as st
 import os
 import sys
 import time
-import subprocess
-import signal
-import shutil
 import base64
-import socket
 import uuid
 import re
-import atexit  # Ensures server process is killed on exit
 
-from ai.utils import create_zip_bytes
+# Import WebsiteGenerator to combine files for preview
+from ai.utils import create_zip_bytes, WebsiteGenerator 
 from ai.deploy import GitHubDeployer
 from agents.manager import ProjectManager
 
 # -------------------------------------------------------
 # 0. Asset Helper & Config
 # -------------------------------------------------------
-# Get the absolute path of the folder containing main.py to avoid path errors
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
 
 def get_logo_path():
     search_dirs = [
@@ -37,15 +31,73 @@ def get_logo_path():
                     return os.path.join(d, file)
     return None
 
-
 logo_path = get_logo_path()
 page_icon = logo_path if logo_path else "⚡"
 
 st.set_page_config(page_title="NexaBuild Pro", page_icon=page_icon, layout="wide", initial_sidebar_state="collapsed")
 
+# -------------------------------------------------------
+# 1. MOCK BACKEND SCRIPT (The Cloud Fix)
+# -------------------------------------------------------
+# This JavaScript intercepts API calls and saves data to the browser's LocalStorage.
+# It replaces the need for a Python Flask server.
+MOCK_BACKEND_SCRIPT = """
+<script>
+(function() {
+    console.log("⚡ NexaBuild Cloud Mode: Mock Backend Activated");
+    const ORIGINAL_FETCH = window.fetch;
+    const DB_PREFIX = 'nexabuild_db_';
+
+    window.fetch = async (url, options) => {
+        // Only intercept calls to our API
+        if (!url.startsWith('/api/')) return ORIGINAL_FETCH(url, options);
+
+        const parts = url.split('/').filter(p => p); // e.g., ['api', 'todos', '123']
+        const collection = parts[1];
+        const id = parts[2];
+        const method = options?.method || 'GET';
+
+        // Simulate network delay
+        await new Promise(r => setTimeout(r, 50));
+
+        // Load collection from LocalStorage
+        let data = JSON.parse(localStorage.getItem(DB_PREFIX + collection) || '[]');
+
+        // --- 1. GET (List) ---
+        if (method === 'GET') {
+            return new Response(JSON.stringify(data), {status: 200});
+        } 
+        
+        // --- 2. POST (Create/Update) ---
+        if (method === 'POST') {
+            const body = JSON.parse(options.body);
+            // Generate ID if missing
+            const newItem = { ...body, id: body.id || crypto.randomUUID() };
+            
+            // Upsert logic
+            const idx = data.findIndex(d => d.id === newItem.id);
+            if (idx >= 0) data[idx] = newItem;
+            else data.push(newItem);
+            
+            localStorage.setItem(DB_PREFIX + collection, JSON.stringify(data));
+            return new Response(JSON.stringify({status: "success", id: newItem.id, data: newItem}), {status: 200});
+        }
+
+        // --- 3. DELETE ---
+        if (method === 'DELETE' && id) {
+             data = data.filter(d => d.id !== id);
+             localStorage.setItem(DB_PREFIX + collection, JSON.stringify(data));
+             return new Response(JSON.stringify({status: "deleted"}), {status: 200});
+        }
+
+        return new Response("Not Found", {status: 404});
+    };
+})();
+</script>
+"""
 
 # -------------------------------------------------------
-# 1. CSS & Styling
+# 2. CSS & Styling
 # -------------------------------------------------------
 def load_custom_css():
     st.markdown("""
@@ -101,124 +153,34 @@ def load_custom_css():
     </style>
     """, unsafe_allow_html=True)
 
-
 load_custom_css()
 
-
 # -------------------------------------------------------
-# 2. Helper Functions (Sanitization & Server)
+# 3. Helper Functions
 # -------------------------------------------------------
 
 def sanitize_files(data):
     """
     Recursively flattens JSON to fix the 'write() argument must be str' error.
-    Extracts real file content if the AI wrapped it in {"files": ...} or folders.
     """
     flat_files = {}
     if isinstance(data, dict):
         for key, value in data.items():
             if isinstance(value, str):
-                # This is a valid file
                 flat_files[key] = value
             elif isinstance(value, dict):
-                # This is a wrapper/folder -> extract files from inside it
                 flat_files.update(sanitize_files(value))
     return flat_files
 
-
+# Session State
 if "files" not in st.session_state: st.session_state.files = {}
 if "page" not in st.session_state: st.session_state.page = "home"
 if "chat" not in st.session_state: st.session_state.chat = []
 if "project_meta" not in st.session_state: st.session_state.project_meta = {}
 if "session_id" not in st.session_state: st.session_state.session_id = str(uuid.uuid4())[:8]
-if "server_pid" not in st.session_state: st.session_state.server_pid = None
-if "server_port" not in st.session_state: st.session_state.server_port = None
-
-PREVIEW_DIR = os.path.join(BASE_DIR, f"live_preview_{st.session_state.session_id}")
-
-
-def get_free_port():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(('', 0))
-    port = sock.getsockname()[1]
-    sock.close()
-    return port
-
-
-def kill_server():
-    if st.session_state.server_pid:
-        try:
-            if sys.platform == "win32":
-                subprocess.call(['taskkill', '/F', '/T', '/PID', str(st.session_state.server_pid)])
-            else:
-                os.kill(st.session_state.server_pid, signal.SIGTERM)
-        except:
-            pass
-        st.session_state.server_pid = None
-        st.session_state.server_port = None
-
-
-# Register cleanup on script exit
-atexit.register(kill_server)
-
-
-def start_universal_server(files):
-    """Deploys the Universal Backend and starts it."""
-    kill_server()
-
-    # --- FIX: Ensure files are flat strings before writing ---
-    safe_files = sanitize_files(files)
-    # ---------------------------------------------------------
-
-    if os.path.exists(PREVIEW_DIR):
-        try:
-            shutil.rmtree(PREVIEW_DIR)
-        except:
-            pass
-    os.makedirs(PREVIEW_DIR, exist_ok=True)
-
-    for name, content in safe_files.items():
-        if name == "app.py": continue
-        path = os.path.join(PREVIEW_DIR, name)
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-
-        try:
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(content)
-        except Exception as e:
-            print(f"Skipping file {name} due to error: {e}")
-
-    template_path = os.path.join(BASE_DIR, "ai", "server_template.py")
-    target_app_path = os.path.join(PREVIEW_DIR, "app.py")
-    if os.path.exists(template_path):
-        shutil.copy(template_path, target_app_path)
-    else:
-        st.error(f"Critical Error: Missing {template_path}. Cannot start backend.")
-        return False
-
-    port = get_free_port()
-    st.session_state.server_port = port
-    env = os.environ.copy()
-    env["PORT"] = str(port)
-    try:
-        process = subprocess.Popen(
-            [sys.executable, "app.py"],
-            cwd=PREVIEW_DIR,
-            env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0
-        )
-        st.session_state.server_pid = process.pid
-        time.sleep(2)
-        return True
-    except Exception as e:
-        st.error(f"Failed to start server: {e}")
-        return False
-
 
 # -------------------------------------------------------
-# 3. UI Components
+# 4. UI Components
 # -------------------------------------------------------
 def render_header():
     logo_html = "⚡ NexaBuild"
@@ -235,7 +197,6 @@ def render_header():
         f"""<div class="nav-container"><div style="font-size:1.5rem; color:white;">{logo_html}</div><div><a href="#" style="color:#00f3ff;">Upgrade</a></div></div>""",
         unsafe_allow_html=True)
 
-
 def render_footer():
     st.markdown("""
     <div class="footer">
@@ -243,9 +204,8 @@ def render_footer():
     </div>
     """, unsafe_allow_html=True)
 
-
 # -------------------------------------------------------
-# 4. Page: Home
+# 5. Page: Home
 # -------------------------------------------------------
 def render_home():
     render_header()
@@ -281,28 +241,25 @@ def render_home():
                 try:
                     result = manager.create_website(prompt)
                     if result:
-                        # --- FIX: Sanitize immediately on creation ---
+                        # Sanitize files immediately
                         clean_files = sanitize_files(result["files"])
                         st.session_state.files = clean_files
                         st.session_state.project_meta = {"plan": result["plan"], "design": result["design"]}
                         st.session_state.chat.extend(
-                            [("user", prompt), ("ai", "Project ready! Universal Backend Attached.")])
+                            [("user", prompt), ("ai", "Project ready! Mock Backend Attached.")])
                         st.session_state.page = "workspace"
-                        start_universal_server(clean_files)
                         st.rerun()
                 except Exception as e:
                     st.error(f"Error: {e}")
     render_footer()
 
-
 # -------------------------------------------------------
-# 5. Page: Workspace
+# 6. Page: Workspace
 # -------------------------------------------------------
 def render_workspace():
-    # --- FIX: Auto-sanitize session state on load (fixes existing corrupt sessions) ---
+    # Sanitize session state on load
     if st.session_state.files:
         st.session_state.files = sanitize_files(st.session_state.files)
-    # ----------------------------------------------------------------------------------
 
     render_header()
     c1, c2 = st.columns([3, 1])
@@ -310,7 +267,6 @@ def render_workspace():
         st.subheader("🛠️ Developer Workspace")
     with c2:
         if st.button("🏠 New Project"):
-            kill_server()
             st.session_state.page, st.session_state.files, st.session_state.chat = "home", {}, []
             st.rerun()
     st.markdown("---")
@@ -329,39 +285,39 @@ def render_workspace():
             mgr = ProjectManager()
             with st.spinner("Coding..."):
                 if u := mgr.edit_website(i, st.session_state.files):
-                    # --- FIX: Sanitize updates too ---
                     clean_updates = sanitize_files(u)
                     st.session_state.files.update(clean_updates)
                     st.session_state.chat.append(("ai", "Updated."))
-                    if st.session_state.server_pid: start_universal_server(st.session_state.files)
                     st.rerun()
 
     t1, t2, t3 = st.tabs(["👁️ Preview", "💻 Code", "🚀 Deploy"])
+    
+    # --- PREVIEW TAB (Cloud Compatible) ---
     with t1:
-        c_ctrl, c_stat = st.columns([1, 3])
-        with c_ctrl:
-            if st.button("🔄 Restart Server"):
-                start_universal_server(st.session_state.files)
-                st.rerun()
-        with c_stat:
-            if st.session_state.server_pid:
-                st.markdown(
-                    f"<span class='server-indicator on'>● Universal Backend Active (Port {st.session_state.server_port})</span>",
-                    unsafe_allow_html=True)
+        if st.session_state.files:
+            # 1. Combine HTML, CSS, JS into one string
+            gen = WebsiteGenerator()
+            html_content = gen.combine_to_html(st.session_state.files)
+            
+            # 2. Inject Mock Backend Script
+            # This ensures API calls work without a backend server
+            if "</body>" in html_content:
+                html_content = html_content.replace("</body>", f"{MOCK_BACKEND_SCRIPT}</body>")
             else:
-                st.markdown("<span class='server-indicator off'>● Server Offline</span>", unsafe_allow_html=True)
-        st.markdown("---")
-        if st.session_state.server_pid:
-            st.components.v1.iframe(f"http://localhost:{st.session_state.server_port}", height=800, scrolling=True)
+                html_content += MOCK_BACKEND_SCRIPT
+                
+            # 3. Render static HTML
+            st.components.v1.html(html_content, height=800, scrolling=True)
         else:
-            st.warning("Server is offline. Click 'Restart Server' to boot up the Universal Backend.")
+            st.warning("No files generated yet.")
+
+    # --- CODE TAB ---
     with t2:
         c_list, c_edit = st.columns([1, 3])
         with c_list:
             f_sel = st.radio("File", list(st.session_state.files.keys())) if st.session_state.files else None
         with c_edit:
             if f_sel:
-                # Check if content is actually a string before displaying
                 file_content = st.session_state.files[f_sel]
                 if not isinstance(file_content, str):
                     file_content = str(file_content)
@@ -369,8 +325,9 @@ def render_workspace():
                 new_code = st.text_area("Edit", file_content, height=600, key=f"e_{f_sel}")
                 if new_code != str(st.session_state.files[f_sel]) and st.button("Save"):
                     st.session_state.files[f_sel] = new_code
-                    start_universal_server(st.session_state.files)
                     st.rerun()
+    
+    # --- DEPLOY TAB ---
     with t3:
         if st.session_state.files:
             st.download_button("⬇️ ZIP", create_zip_bytes(st.session_state.files), "site.zip", "application/zip")
@@ -383,7 +340,6 @@ def render_workspace():
                 except Exception as e:
                     st.error(f"Error: {e}")
     render_footer()
-
 
 if st.session_state.page == "home":
     render_home()
