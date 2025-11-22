@@ -7,10 +7,11 @@ import uuid
 import json
 
 # Import WebsiteGenerator to combine files for preview
-from ai.utils import create_zip_bytes, WebsiteGenerator 
+from ai.utils import create_zip_bytes, WebsiteGenerator
 from ai.deploy import GitHubDeployer
 from agents.manager import ProjectManager
-from ai.chatbot import NexaBot
+# --- IMPORT NEXABOT FROM SEPARATE FILE ---
+from ai.chatbot import NexaBot 
 
 # -------------------------------------------------------
 # 0. Asset Helper & Config
@@ -43,7 +44,7 @@ def load_custom_css():
     <style>
         /* --- Global Variables --- */
         :root {
-            --bg-color: #0d1117; /* GitHub Dark Dimmed */
+            --bg-color: #0d1117; 
             --card-bg: #161b22;
             --border-color: #30363d;
             --neon-cyan: #00f3ff;
@@ -76,11 +77,11 @@ def load_custom_css():
             background: rgba(22, 27, 34, 0.8);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border-color);
-            padding: 15px 20px;
+            padding: 10px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            border-radius: 10px;
         }
         .nav-logo {
             font-size: 1.5rem;
@@ -126,7 +127,6 @@ def load_custom_css():
             border-radius: 4px !important;
             padding: 10px !important;
         }
-        /* Fix specific Streamlit Text Area Wrapper */
         .stTextArea > div > div {
             background-color: var(--vscode-bg);
             border: 1px solid var(--border-color);
@@ -142,7 +142,7 @@ def load_custom_css():
         /* --- Buttons (High Visibility) --- */
         .stButton > button {
             background: var(--neon-cyan) !important;
-            color: #000000 !important; /* Black text for contrast */
+            color: #000000 !important;
             border: none;
             font-weight: bold;
             transition: transform 0.2s;
@@ -152,23 +152,12 @@ def load_custom_css():
             box-shadow: 0 0 10px var(--neon-cyan);
         }
 
-        /* Secondary Button Style (if needed) */
-        div[data-testid="stHorizontalBlock"] button {
-            background: #21262d !important;
+        /* --- Popover Button Styling --- */
+        [data-testid="stPopover"] > button {
+            background: transparent !important;
+            border: 1px solid var(--neon-cyan) !important;
             color: var(--neon-cyan) !important;
-            border: 1px solid var(--border-color) !important;
-        }
-        div[data-testid="stHorizontalBlock"] button:hover {
-            border-color: var(--neon-cyan) !important;
-        }
-
-        /* --- Glass Cards --- */
-        .glass-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
+            font-weight: bold;
         }
 
         /* --- Sidebar --- */
@@ -197,7 +186,6 @@ def sanitize_files(data):
                 new_path = f"{path}/{k}" if path else k
                 recurse(v, new_path)
         else:
-            # Convert non-string content to string safely
             if isinstance(obj, (bytes, bytearray)):
                 try:
                     content = obj.decode("utf-8")
@@ -210,7 +198,6 @@ def sanitize_files(data):
                     content = json.dumps(obj)
                 except Exception:
                     content = str(obj)
-            # if path is empty generate a unique name
             key = path or f"file_{uuid.uuid4().hex[:8]}"
             flat_files[key] = content
 
@@ -227,16 +214,16 @@ if "page" not in st.session_state: st.session_state.page = "home"
 if "chat" not in st.session_state: st.session_state.chat = []
 if "project_meta" not in st.session_state: st.session_state.project_meta = {}
 if "session_id" not in st.session_state: st.session_state.session_id = str(uuid.uuid4())[:8]
+
+# --- NEXABOT HISTORY STATE ---
 if "nexabot_history" not in st.session_state: st.session_state.nexabot_history = []
 
 # -------------------------------------------------------
 # 3. UI Components
 # -------------------------------------------------------
 def render_header():
-    # Default text logo
+    # Logo Logic
     logo_html = "⚡ NexaBuild"
-
-    # Check for logo in images directory
     if os.path.exists("images"):
         logo_file = next((f for f in os.listdir("images") if f.lower().startswith("logo.")), None)
 
@@ -244,63 +231,62 @@ def render_header():
             try:
                 with open(os.path.join("images", logo_file), "rb") as f:
                     encoded_string = base64.b64encode(f.read()).decode()
-
                 ext = logo_file.split('.')[-1].lower()
                 mime_type = f"image/{'svg+xml' if ext == 'svg' else ext}"
                 logo_html = f'<img src="data:{mime_type};base64,{encoded_string}" style="height: 40px; border-radius: 6px;"> NexaBuild'
             except Exception as e:
                 print(f"Error loading logo: {e}")
 
-    # --- HEADER LAYOUT ---
+    # --- HEADER LAYOUT WITH BUTTON ---
     c_nav, c_bot = st.columns([6, 1], gap="small")
     
-with c_nav:
-    st.markdown(f"""
-    <div class="nav-container">
-        <div class="nav-logo">{logo_html}</div>
-        <div class="nav-links">
-            <a href="#" style="color: var(--neon-cyan); border: 1px solid var(--neon-cyan); padding: 5px 10px; border-radius: 5px;">>Home</a>
-            <a href="#" style="color: var(--neon-cyan); border: 1px solid var(--neon-cyan); padding: 5px 10px; border-radius: 5px;">>About</a>
-            <a href="mailto:@gmail.com" style="color: var(--neon-cyan); border: 1px solid var(--neon-cyan); padding: 5px 10px; border-radius: 5px;">Contact Us</a>
+    with c_nav:
+        st.markdown(f"""
+        <div class="nav-container">
+            <div class="nav-logo">{logo_html}</div>
+            <div class="nav-links">
+                <a href="#">Home</a>
+                <a href="#">About</a>
+                <a href="mailto:@gmail.com">Contact</a>
+            </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
-
+        """, unsafe_allow_html=True)
+        
     with c_bot:
-        # --- CHATBOT BUTTON (Popover) ---
+        # --- POPUP CHATBOT ---
         with st.popover("🤖 Ask AI", use_container_width=True):
             st.caption("Chat with NexaBot")
             
-            # 1. Display History
+            # 1. Show History
             for msg in st.session_state.nexabot_history:
-                role = msg["role"]
-                # Map 'model' role to 'assistant' for streamlit UI
-                ui_role = "assistant" if role == "model" else role
-                with st.chat_message(ui_role):
-                    st.write(msg["parts"])
-            
-            # 2. Chat Input
-            if prompt := st.chat_input("How can I help?"):
-                # Add user message to state
-                st.session_state.nexabot_history.append({"role": "user", "parts": prompt})
-                st.rerun() # Rerun to show user message immediately
+                # Display 'user' or 'assistant' (mapped from model)
+                st.chat_message(msg["role"]).write(msg["content"])
 
-            # 3. Generate Response (if last message was user)
+            # 2. Chat Input
+            if prompt := st.chat_input("Ask NexaBot..."):
+                st.session_state.nexabot_history.append({"role": "user", "content": prompt})
+                st.rerun()
+
+            # 3. Generate Reply
             if st.session_state.nexabot_history and st.session_state.nexabot_history[-1]["role"] == "user":
                 with st.spinner("Thinking..."):
                     try:
+                        # Instantiate the class from ai/chatbot.py
                         bot = NexaBot()
-                        # Prepare history for Gemini (exclude the very last message which is the new prompt)
-                        # Gemini expects context, we send the new prompt as the 'query'
-                        history_context = st.session_state.nexabot_history[:-1]
-                        last_prompt = st.session_state.nexabot_history[-1]["parts"]
                         
-                        response_text = bot.ask(last_prompt, history_context)
+                        # Convert UI history to Gemini history format (role: 'user'/'model', parts: 'text')
+                        gemini_history = []
+                        for m in st.session_state.nexabot_history[:-1]:
+                            role_api = "user" if m["role"] == "user" else "model"
+                            gemini_history.append({"role": role_api, "parts": m["content"]})
+
+                        # Get response
+                        response_text = bot.ask(st.session_state.nexabot_history[-1]["content"], gemini_history)
                         
-                        st.session_state.nexabot_history.append({"role": "model", "parts": response_text})
+                        st.session_state.nexabot_history.append({"role": "assistant", "content": response_text})
                         st.rerun()
                     except Exception as e:
-                        st.error(f"Error: {e}")
+                        st.error(f"AI Error: {e}")
 
 
 def render_footer():
@@ -379,7 +365,7 @@ def render_workspace():
     st.markdown("---")
 
     with st.sidebar:
-        st.subheader("💬 Chat")
+        st.subheader("💬 Team Chat")
         if st.session_state.project_meta:
             with st.expander("Plan"): 
                 try:
