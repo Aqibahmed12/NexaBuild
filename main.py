@@ -45,7 +45,7 @@ def load_custom_css():
         /* --- Global Variables --- */
         :root {
             --bg-color: #0d1117; 
-            --card-bg: #161b22;
+            --card-bg: #161b22; 
             --border-color: #30363d;
             --neon-cyan: #00f3ff;
             --neon-purple: #bc13fe;
@@ -62,15 +62,8 @@ def load_custom_css():
         }
 
         /* --- Typography --- */
-        h1, h2, h3 {
-            color: var(--text-white) !important;
-            font-family: 'Inter', sans-serif;
-            font-weight: 700;
-        }
-        p, div, span {
-            color: var(--text-primary);
-            font-family: 'Inter', sans-serif;
-        }
+        h1, h2, h3 { color: var(--text-white) !important; font-family: 'Inter', sans-serif; }
+        p, div, span { font-family: 'Inter', sans-serif; }
 
         /* --- Navbar/Footer Styling --- */
         .nav-container {
@@ -89,86 +82,79 @@ def load_custom_css():
             background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            display: flex; align-items: center; gap: 10px;
         }
         .nav-links a {
-            color: var(--text-primary);
-            text-decoration: none;
-            margin-left: 20px;
-            font-size: 0.9rem;
-            transition: color 0.3s;
+            color: var(--text-primary); text-decoration: none; margin-left: 20px; font-size: 0.9rem; transition: color 0.3s;
         }
-        .nav-links a:hover {
-            color: var(--neon-cyan);
-        }
+        .nav-links a:hover { color: var(--neon-cyan); }
 
-        .footer-container {
-            margin-top: 50px;
-            padding: 30px;
-            border-top: 1px solid var(--border-color);
-            text-align: center;
-            background: var(--card-bg);
-            font-size: 0.9rem;
-        }
-        .footer-link {
-            color: var(--neon-cyan);
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        /* --- VS Code Style Editor (Text Area) --- */
-        textarea {
-            background-color: var(--vscode-bg) !important;
-            color: var(--vscode-fg) !important;
-            font-family: 'Consolas', 'Courier New', monospace !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 4px !important;
-            padding: 10px !important;
-        }
-        .stTextArea > div > div {
-            background-color: var(--vscode-bg);
-            border: 1px solid var(--border-color);
-        }
-
-        /* --- Chat Input & Standard Inputs --- */
-        .stTextInput input, .stChatInput textarea {
+        /* --- 1. GLOWING 'ASK AI' BUTTON --- */
+        /* This targets the button that opens the popover */
+        [data-testid="stPopover"] > button {
             background-color: #0d1117 !important;
-            color: white !important;
-            border: 1px solid var(--border-color) !important;
+            border: 2px solid var(--neon-cyan) !important;
+            color: var(--neon-cyan) !important;
+            font-weight: 900 !important; /* Extra bold */
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3), inset 0 0 10px rgba(0, 243, 255, 0.1) !important;
+            transition: all 0.3s ease-in-out;
+            border-radius: 8px !important;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        [data-testid="stPopover"] > button:hover {
+            box-shadow: 0 0 25px var(--neon-cyan), inset 0 0 15px var(--neon-cyan) !important;
+            color: #ffffff !important;
+            text-shadow: 0 0 8px var(--neon-cyan);
+            transform: scale(1.05);
+            border-color: #ffffff !important;
         }
 
-        /* --- Buttons (High Visibility) --- */
+        /* --- 2. CHAT POPUP VISIBILITY FIXES --- */
+        
+        /* Force text inside chat messages to be dark (since popover is white) */
+        div[data-testid="stChatMessageContent"] p {
+            color: #333333 !important; 
+            font-weight: 500;
+        }
+
+        /* Fix the Chat Input Box inside the Popover */
+        div[data-testid="stPopoverBody"] textarea {
+            background-color: #f0f2f6 !important; /* Light grey background */
+            color: #000000 !important; /* Black text */
+            border: 1px solid #ccc !important;
+        }
+        
+        /* Fix Placeholder Text Visibility */
+        div[data-testid="stPopoverBody"] textarea::placeholder {
+            color: #666666 !important;
+            opacity: 1 !important;
+        }
+
+        /* Make the 'Send' arrow button visible */
+        div[data-testid="stPopoverBody"] button[kind="primary"] {
+            background-color: var(--neon-cyan) !important;
+            border: none !important;
+        }
+        div[data-testid="stPopoverBody"] button[kind="primary"] svg {
+            fill: black !important;
+        }
+
+        /* --- Other Components --- */
         .stButton > button {
             background: var(--neon-cyan) !important;
             color: #000000 !important;
-            border: none;
-            font-weight: bold;
+            border: none; font-weight: bold;
             transition: transform 0.2s;
         }
-        .stButton > button:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 10px var(--neon-cyan);
-        }
+        .stButton > button:hover { transform: scale(1.02); box-shadow: 0 0 10px var(--neon-cyan); }
 
-        /* --- Popover Button Styling --- */
-        [data-testid="stPopover"] > button {
-            background: transparent !important;
-            border: 1px solid var(--neon-cyan) !important;
-            color: var(--neon-cyan) !important;
-            font-weight: bold;
-        }
-
-        /* --- Sidebar --- */
-        [data-testid="stSidebar"] {
-            background-color: #010409;
-            border-right: 1px solid #30363d;
-        }
+        /* Sidebar */
+        [data-testid="stSidebar"] { background-color: #010409; border-right: 1px solid #30363d; }
     </style>
     """, unsafe_allow_html=True)
 load_custom_css()
-
 # -------------------------------------------------------
 # 2. Helper Functions
 # -------------------------------------------------------
@@ -245,9 +231,9 @@ def render_header():
         <div class="nav-container">
             <div class="nav-logo">{logo_html}</div>
             <div class="nav-links">
-                <a href="#">Home</a>
+                <a href="https://nexabuild.streamlit.app/">Home</a>
                 <a href="#">About</a>
-                <a href="mailto:@gmail.com">Contact</a>
+                <a href="mailto:ahmedaqib152@gmail.com">Contact</a>
             </div>
         </div>
         """, unsafe_allow_html=True)
