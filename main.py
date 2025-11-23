@@ -49,8 +49,6 @@ if st.query_params.get("nav") == "home":
 # -------------------------------------------------------
 def load_custom_css():
     # Note: CSS carefully scopes rules to avoid breaking Streamlit core.
-    # Adjusted z-index layering so the popover (NexaBot) sits above the custom header,
-    # and added neon glow border to the chat box inside the popover.
     st.markdown("""
     <style>
         /* --- Global Variables --- */
@@ -66,7 +64,7 @@ def load_custom_css():
             --vscode-fg: #d4d4d4;
 
             /* Layering: keep nav beneath popovers but above page content */
-            --streamlit-header-height: 56px; /* adjust if your Streamlit topbar is taller */
+            --streamlit-header-height: 56px; 
             --nav-vertical-offset: calc(var(--streamlit-header-height) + 12px);
             --nav-height: 64px;
             --max-content-width: 1200px;
@@ -159,7 +157,6 @@ def load_custom_css():
         }
 
         /* --- Buttons & Popover Button Styling (NexaBot) --- */
-        /* Broadened selectors to match different Streamlit versions and renderings */
         button[data-testid="stPopoverOpenButton"],
         button[aria-label*="NexaBot"],
         [data-testid="stPopover"] > button,
@@ -173,10 +170,9 @@ def load_custom_css():
             transition: all 0.18s ease-in-out !important;
             box-shadow: 0 8px 30px rgba(0,243,255,0.08) !important;
             position: relative !important;
-            z-index: calc(var(--popover-z) + 2) !important; /* ensure button itself is above header */
+            z-index: calc(var(--popover-z) + 2) !important; 
         }
 
-        /* Make sure inner text / icon colors stick */
         button[data-testid="stPopoverOpenButton"] span,
         button[aria-label*="NexaBot"] span,
         button[data-testid="stPopoverOpenButton"] svg,
@@ -187,7 +183,6 @@ def load_custom_css():
             fill: #000 !important;
         }
 
-        /* Hover effect: glow + slight scale */
         button[data-testid="stPopoverOpenButton"]:hover,
         button[aria-label*="NexaBot"]:hover,
         [data-testid="stPopover"] > button:hover {
@@ -196,12 +191,10 @@ def load_custom_css():
         }
 
         /* --- Popover container and body layering --- */
-        /* Ensure the opened popover panel floats above the nav */
         div[data-testid="stPopover"] {
             position: relative !important;
             z-index: calc(var(--popover-z) + 3) !important;
         }
-        /* Body is typically appended under same node; ensure content has very high z-index */
         div[data-testid="stPopoverBody"] {
             position: relative !important;
             z-index: calc(var(--popover-z) + 4) !important;
@@ -209,14 +202,12 @@ def load_custom_css():
             color: #000;
             border-radius: 12px;
             padding: 12px !important;
-            /* Small offset so the body shows below the open button and above the nav visually */
             margin-top: 8px !important;
             box-shadow: 0 12px 60px rgba(0,0,0,0.45), 0 0 30px rgba(0,243,255,0.12);
             border: 1px solid rgba(0,243,255,0.12);
         }
 
         /* --- Neon glowing border for the central chat box inside the popover --- */
-        /* This targets the chat message container and chat box area in the popover */
         div[data-testid="stPopoverBody"] .stChat,
         div[data-testid="stPopoverBody"] div[data-testid="stChatMessageContent"],
         div[data-testid="stPopoverBody"] .stChatMessage,
@@ -225,7 +216,6 @@ def load_custom_css():
             border-radius: 12px !important;
         }
 
-        /* Apply neon glow border to the main area (middle chat box) */
         div[data-testid="stPopoverBody"] > div:first-child,
         div[data-testid="stPopoverBody"] .stChatMessageBlock,
         div[data-testid="stPopoverBody"] .stChat {
@@ -238,13 +228,11 @@ def load_custom_css():
             background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,250,250,0.96));
         }
 
-        /* Chat message text inside popover — keep readable */
         div[data-testid="stPopoverBody"] div[data-testid="stChatMessageContent"] p {
             color: #001019 !important;
             font-weight: 500 !important;
         }
 
-        /* Chat input area: neon focus glow */
         div[data-testid="stPopoverBody"] textarea:focus,
         div[data-testid="stPopoverBody"] input:focus {
             outline: none !important;
@@ -285,7 +273,7 @@ def load_custom_css():
             font-weight: 600 !important;
         }
 
-        /* Sidebar: keep readable and consistent */
+        /* Sidebar */
         [data-testid="stSidebar"] {
             background-color: #010409;
             border-right: 1px solid #1f2937;
@@ -305,22 +293,13 @@ def load_custom_css():
             border: 1px solid #25303a !important;
         }
 
-        /* Tabs & workspace spacing adjustments */
-        .stTabs, .css-1v3fvcr {
-            margin-top: 8px;
-        }
+        .stTabs, .css-1v3fvcr { margin-top: 8px; }
         .stApp .stTabs [role="tablist"] { gap: 8px; }
-
-        /* Make preview iframe area nicely spaced and centered */
         .stApp .stComponentsPlaceholder, .stApp iframe {
-            border-radius: 8px;
-            overflow: hidden;
+            border-radius: 8px; overflow: hidden;
         }
-
-        /* Balance column paddings across the app */
         .row-widget.stRadio, .row-widget.stMultiselect, .row-widget.stTextArea {
-            padding-top: 6px;
-            padding-bottom: 6px;
+            padding-top: 6px; padding-bottom: 6px;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -359,6 +338,33 @@ if "nexabot_history" not in st.session_state: st.session_state.nexabot_history =
 # -------------------------------------------------------
 # 3. UI Components
 # -------------------------------------------------------
+
+# --- NEW: Bot Logic Separated ---
+def render_nexabot():
+    with st.popover("🤖 NexaBot", use_container_width=True):
+        st.caption("Hey Buddy! Do you need help? Ask NexaBot")
+        for msg in st.session_state.nexabot_history:
+            st.chat_message(msg["role"]).write(msg["content"])
+
+        if prompt := st.chat_input("Ask NexaBot..."):
+            st.session_state.nexabot_history.append({"role": "user", "content": prompt})
+            st.rerun()
+
+        if st.session_state.nexabot_history and st.session_state.nexabot_history[-1]["role"] == "user":
+            with st.spinner("Thinking..."):
+                try:
+                    bot = NexaBot()
+                    history_context = []
+                    for m in st.session_state.nexabot_history[:-1]:
+                        role_api = "user" if m["role"] == "user" else "model"
+                        history_context.append({"role": role_api, "parts": m["content"]})
+
+                    response_text = bot.ask(st.session_state.nexabot_history[-1]["content"], history_context)
+                    st.session_state.nexabot_history.append({"role": "assistant", "content": response_text})
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"AI Error: {e}")
+
 def render_header():
     logo_html = "⚡ NexaBuild"
     if os.path.exists("images"):
@@ -373,50 +379,19 @@ def render_header():
             except Exception as e:
                 print(f"Error loading logo: {e}")
 
-    # Use two columns: main nav and the chatbot button column (kept small)
-    c_nav, c_bot = st.columns([6, 1], gap="small")
-    
-    with c_nav:
-        # Render fixed header markup. The CSS above makes .nav-container fixed and prevents overlap.
-        st.markdown(f"""
-        <div class="nav-container">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <div class="nav-logo">{logo_html}</div>
-            </div>
-            <div class="nav-links">
-                <a href="?nav=home" target="_self">Home</a>
-                <a href="#">About</a>
-                <a href="mailto:ahmedaqib152@gmail.com">Contact</a>
-            </div>
+    # --- CHANGED: Simplified Header (No Bot here) ---
+    st.markdown(f"""
+    <div class="nav-container">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div class="nav-logo">{logo_html}</div>
         </div>
-        """, unsafe_allow_html=True)
-        
-    with c_bot:
-        # Chatbot Button
-        # Keep behavior intact; styling targets the popover open button using robust selectors.
-        with st.popover("🤖 NexaBot", use_container_width=True):
-            st.caption("Hey Buddy! Do you need help? Ask NexaBot")
-            for msg in st.session_state.nexabot_history:
-                st.chat_message(msg["role"]).write(msg["content"])
-
-            if prompt := st.chat_input("Ask NexaBot..."):
-                st.session_state.nexabot_history.append({"role": "user", "content": prompt})
-                st.rerun()
-
-            if st.session_state.nexabot_history and st.session_state.nexabot_history[-1]["role"] == "user":
-                with st.spinner("Thinking..."):
-                    try:
-                        bot = NexaBot()
-                        history_context = []
-                        for m in st.session_state.nexabot_history[:-1]:
-                            role_api = "user" if m["role"] == "user" else "model"
-                            history_context.append({"role": role_api, "parts": m["content"]})
-
-                        response_text = bot.ask(st.session_state.nexabot_history[-1]["content"], history_context)
-                        st.session_state.nexabot_history.append({"role": "assistant", "content": response_text})
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"AI Error: {e}")
+        <div class="nav-links">
+            <a href="?nav=home" target="_self">Home</a>
+            <a href="#">About</a>
+            <a href="mailto:ahmedaqib152@gmail.com">Contact</a>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 def render_footer():
     st.markdown("""
@@ -433,7 +408,11 @@ def render_footer():
 # -------------------------------------------------------
 def render_home():
     render_header()
+    
+    # --- CHANGED: Layout ---
     c1, c2, c3 = st.columns([1, 2, 1])
+    
+    # Middle Column: Text & Form
     with c2:
         st.markdown("""
             <div style='text-align: center; margin-bottom: 40px;'>
@@ -472,6 +451,14 @@ def render_home():
                         st.rerun()
                 except Exception as e:
                     st.error(f"Error: {e}")
+    
+    # Right Column: NexaBot (Placed here per your request)
+    with c3:
+        st.write("") # Vertical Spacer to align with Title
+        st.write("") 
+        st.write("") 
+        render_nexabot()
+
     render_footer()
 
 # -------------------------------------------------------
@@ -482,11 +469,9 @@ def render_workspace():
     if st.session_state.files:
         st.session_state.files = sanitize_files(st.session_state.files)
 
-
     render_header()
     st.subheader("🛠️ Developer Workspace")
     st.markdown("---")
-
 
     with st.sidebar:
         st.subheader("💬 Team Chat")
