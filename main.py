@@ -97,6 +97,20 @@ def load_custom_css():
             transform: scale(1.2); text-decoration: underline; text-underline-offset: 6px;
         }
 
+        .footer-container {
+            margin-top: 50px;
+            padding: 30px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            background: var(--card-bg);
+            font-size: 0.9rem;
+        }
+        .footer-link {
+            color: var(--neon-cyan);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
         /* --- BUTTONS (Launch Team & Ask AI) --- */
         /* Force high contrast: Cyan Background, Black Text */
         
@@ -283,14 +297,12 @@ def render_home():
                 </p>
             </div>
             """, unsafe_allow_html=True)
-        
-        # FIX: Removed the extra st.markdown div wrappers. 
-        # The Form is now styled directly via CSS targeting [data-testid="stForm"]
+
         
         with st.form("create_form"):
             prompt = st.text_area("Describe your project", height=150,
                                   placeholder="E.g., A Todo app where I can add, delete and save tasks permanently.")
-            submitted = st.form_submit_button("🚀 Launch Team")
+            submitted = st.form_submit_button("🚀 Generate")
         
         if submitted and prompt:
             manager = ProjectManager()
@@ -318,13 +330,13 @@ def render_workspace():
         st.session_state.files = sanitize_files(st.session_state.files)
 
     render_header()
-    c1, c2 = st.columns([3, 1])
+    c1 = st.columns(3)
     with c1:
         st.subheader("🛠️ Developer Workspace")
-    with c2:
-        if st.button("🏠 New Project"):
-            st.session_state.page, st.session_state.files, st.session_state.chat = "home", {}, []
-            st.rerun()
+    # with c2:
+    #     if st.button("🏠 New Project"):
+    #         st.session_state.page, st.session_state.files, st.session_state.chat = "home", {}, []
+    #         st.rerun()
     st.markdown("---")
 
     with st.sidebar:
