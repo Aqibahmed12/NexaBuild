@@ -115,17 +115,23 @@ def load_custom_css():
         /* Force high contrast: Cyan Background, Black Text */
         
         /* 1. Ask AI Popover Button */
+        /* --- FIX: NexaBot Top Right Button --- */
         [data-testid="stPopover"] > button {
             background-color: var(--neon-cyan) !important;
-            color: #000000 !important;
+            color: #000000 !important;  /* BLACK TEXT for visibility */
             border: none !important;
             font-weight: 900 !important;
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3) !important;
+            padding: 8px 18px !important;
+            border-radius: 8px !important;
+            box-shadow: 0 0 12px rgba(0, 243, 255, 0.4) !important;
             transition: all 0.3s ease-in-out;
         }
+
+        /* Hover effect like Generate button */
         [data-testid="stPopover"] > button:hover {
             transform: scale(1.05);
             box-shadow: 0 0 25px var(--neon-cyan) !important;
+            background-color: var(--neon-cyan) !important;
             color: #000000 !important;
         }
 
