@@ -10,7 +10,7 @@ import json
 from ai.utils import create_zip_bytes, WebsiteGenerator
 from ai.deploy import GitHubDeployer
 from agents.manager import ProjectManager
-from ai.chatbot import NexaBot 
+from ai.chatbot import NexaBot
 
 # -------------------------------------------------------
 # 0. Asset Helper & Config
@@ -86,27 +86,27 @@ def load_custom_css():
             display: flex; align-items: center; gap: 10px;
         }
 
-        /* --- NEON GLOWING LINKS (Updated) --- */
+        /* --- NEON GLOWING LINKS --- */
         .nav-links {
             display: flex;
-            gap: 30px; /* Space between links */
+            gap: 30px; 
         }
         .nav-links a {
             color: #c9d1d9;
             text-decoration: none;
             font-size: 1rem;
             font-weight: 600;
-            transition: all 0.3s ease; /* Smooth transition */
+            transition: all 0.3s ease; 
             display: inline-block;
         }
         
         /* Hover Effects */
         .nav-links a:hover {
-            color: #00f3ff; /* Neon Cyan Color */
-            text-shadow: 0 0 10px #00f3ff, 0 0 20px #00f3ff; /* Glowing Effect */
-            transform: scale(1.2); /* "Come Forward" Effect */
+            color: #00f3ff; 
+            text-shadow: 0 0 10px #00f3ff, 0 0 20px #00f3ff; 
+            transform: scale(1.2); 
             text-decoration: underline;
-            text-underline-offset: 6px; /* Space between text and line */
+            text-underline-offset: 6px; 
         }
 
         /* --- Glowing 'Ask AI' Button --- */
@@ -146,43 +146,26 @@ def load_custom_css():
     </style>
     """, unsafe_allow_html=True)
 load_custom_css()
+
 # -------------------------------------------------------
 # 2. Helper Functions
 # -------------------------------------------------------
 
 def sanitize_files(data):
-    """
-    Recursively flattens a nested dict of files (folders -> files) into a single dict
-    mapping "path/to/file" -> "file contents as str".
-    """
     flat_files = {}
-
     def recurse(obj, path=""):
         if isinstance(obj, dict):
             for k, v in obj.items():
-                new_path = f"{path}/{k}" if path else k
-                recurse(v, new_path)
+                recurse(v, f"{path}/{k}" if path else k)
         else:
             if isinstance(obj, (bytes, bytearray)):
-                try:
-                    content = obj.decode("utf-8")
-                except Exception:
-                    content = obj.decode("utf-8", "replace")
-            elif isinstance(obj, str):
-                content = obj
-            else:
-                try:
-                    content = json.dumps(obj)
-                except Exception:
-                    content = str(obj)
-            key = path or f"file_{uuid.uuid4().hex[:8]}"
-            flat_files[key] = content
+                try: content = obj.decode("utf-8")
+                except: content = obj.decode("utf-8", "replace")
+            elif isinstance(obj, str): content = obj
+            else: content = str(obj)
+            flat_files[path or f"file_{uuid.uuid4().hex[:8]}"] = content
 
-    if isinstance(data, dict):
-        recurse(data, "")
-    else:
-        recurse(data, "")
-
+    recurse(data)
     return flat_files
 
 # Session State
@@ -191,15 +174,12 @@ if "page" not in st.session_state: st.session_state.page = "home"
 if "chat" not in st.session_state: st.session_state.chat = []
 if "project_meta" not in st.session_state: st.session_state.project_meta = {}
 if "session_id" not in st.session_state: st.session_state.session_id = str(uuid.uuid4())[:8]
-
-# --- NEXABOT HISTORY STATE ---
 if "nexabot_history" not in st.session_state: st.session_state.nexabot_history = []
 
 # -------------------------------------------------------
 # 3. UI Components
 # -------------------------------------------------------
 def render_header():
-    # Logo Logic
     logo_html = "⚡ NexaBuild"
     if os.path.exists("images"):
         logo_file = next((f for f in os.listdir("images") if f.lower().startswith("logo.")), None)
@@ -216,7 +196,6 @@ def render_header():
     c_nav, c_bot = st.columns([6, 1], gap="small")
     
     with c_nav:
-        # Clean HTML using the classes defined in CSS
         st.markdown(f"""
         <div class="nav-container">
             <div class="nav-logo">{logo_html}</div>
@@ -360,7 +339,7 @@ def render_workspace():
 
     t1, t2, t3 = st.tabs(["👁️ Preview", "💻 Code", "🚀 Deploy"])
     
-    # --- PREVIEW TAB (Pure Static) ---
+    # --- PREVIEW TAB ---
     with t1:
         if st.session_state.files:
             try:
@@ -376,32 +355,38 @@ def render_workspace():
             st.warning("No files generated yet.")
 
     # --- CODE TAB ---
-    with tab_code:
+    with t2:
         col_list, col_editor = st.columns([1, 4])
 
         with col_list:
             st.markdown("##### Files")
-            selected_file = st.radio("Select File", list(st.session_state.files.keys()), label_visibility="collapsed")
+            file_keys = list(st.session_state.files.keys()) if st.session_state.files else []
+            if file_keys:
+                selected_file = st.radio("Select File", file_keys, label_visibility="collapsed")
+            else:
+                selected_file = None
 
         with col_editor:
-            st.markdown(f"##### Editing: `{selected_file}`")
-            # This text area is styled by CSS to look like VS Code
-            new_code = st.text_area(
-                "Code Editor",
-                value=st.session_state.files[selected_file],
-                height=600,
-                label_visibility="collapsed",
-                key=f"editor_{selected_file}"
-            )
+            if selected_file:
+                st.markdown(f"##### Editing: `{selected_file}`")
+                new_code = st.text_area(
+                    "Code Editor",
+                    value=st.session_state.files[selected_file],
+                    height=600,
+                    label_visibility="collapsed",
+                    key=f"editor_{selected_file}"
+                )
 
-            if new_code != st.session_state.files[selected_file]:
-                if st.button(f"💾 Save Changes to {selected_file}"):
-                    st.session_state.files[selected_file] = new_code
-                    st.success("File Saved!")
-                    st.rerun()
+                if new_code != st.session_state.files[selected_file]:
+                    if st.button(f"💾 Save Changes to {selected_file}"):
+                        st.session_state.files[selected_file] = new_code
+                        st.success("File Saved!")
+                        st.rerun()
+            else:
+                st.info("Select a file to edit.")
     
     # --- DEPLOY TAB ---
-   with tab_deploy:
+    with t3:
         st.markdown("### 📦 Export Project")
 
         # Download Box
@@ -412,14 +397,15 @@ def render_workspace():
         </div>
         """, unsafe_allow_html=True)
 
-        zip_bytes = create_zip_bytes(st.session_state.files)
-        st.download_button(
-            label="⬇️ Download ZIP Package",
-            data=zip_bytes,
-            file_name="my-website-project.zip",
-            mime="application/zip",
-            type="primary"
-        )
+        if st.session_state.files:
+            zip_bytes = create_zip_bytes(st.session_state.files)
+            st.download_button(
+                label="⬇️ Download ZIP Package",
+                data=zip_bytes,
+                file_name="my-website-project.zip",
+                mime="application/zip",
+                type="primary"
+            )
 
         st.markdown("---")
         st.markdown("### 🐙 GitHub Pages Deploy")
