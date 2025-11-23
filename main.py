@@ -10,7 +10,6 @@ import json
 from ai.utils import create_zip_bytes, WebsiteGenerator
 from ai.deploy import GitHubDeployer
 from agents.manager import ProjectManager
-# --- IMPORT NEXABOT FROM SEPARATE FILE ---
 from ai.chatbot import NexaBot 
 
 # -------------------------------------------------------
@@ -36,6 +35,15 @@ page_icon = logo_path if logo_path else "⚡"
 
 st.set_page_config(page_title="NexaBuild", page_icon=page_icon, layout="wide", initial_sidebar_state="collapsed")
 
+# --- HOME RESET LOGIC ---
+if st.query_params.get("nav") == "home":
+    st.session_state.page = "home"
+    st.session_state.files = {}
+    st.session_state.chat = []
+    st.session_state.project_meta = {}
+    st.query_params.clear()
+    st.rerun()
+
 # -------------------------------------------------------
 # 1. CSS & Styling
 # -------------------------------------------------------
@@ -55,17 +63,10 @@ def load_custom_css():
             --vscode-fg: #d4d4d4;
         }
 
-        /* --- Main Background --- */
-        .stApp {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-        }
-
-        /* --- Typography --- */
+        .stApp { background-color: var(--bg-color); color: var(--text-primary); }
         h1, h2, h3 { color: var(--text-white) !important; font-family: 'Inter', sans-serif; }
-        p, div, span { font-family: 'Inter', sans-serif; }
-
-        /* --- Navbar/Footer Styling --- */
+        
+        /* --- Navbar Container --- */
         .nav-container {
             background: rgba(22, 27, 34, 0.8);
             backdrop-filter: blur(10px);
@@ -84,64 +85,55 @@ def load_custom_css():
             -webkit-text-fill-color: transparent;
             display: flex; align-items: center; gap: 10px;
         }
-        .nav-links a {
-            color: var(--text-primary); text-decoration: none; margin-left: 20px; font-size: 0.9rem; transition: color 0.3s;
-        }
-        .nav-links a:hover { color: var(--neon-cyan); }
 
-        /* --- 1. GLOWING 'ASK AI' BUTTON --- */
-        /* This targets the button that opens the popover */
+        /* --- NEON GLOWING LINKS (Updated) --- */
+        .nav-links {
+            display: flex;
+            gap: 30px; /* Space between links */
+        }
+        .nav-links a {
+            color: #c9d1d9;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease; /* Smooth transition */
+            display: inline-block;
+        }
+        
+        /* Hover Effects */
+        .nav-links a:hover {
+            color: #00f3ff; /* Neon Cyan Color */
+            text-shadow: 0 0 10px #00f3ff, 0 0 20px #00f3ff; /* Glowing Effect */
+            transform: scale(1.2); /* "Come Forward" Effect */
+            text-decoration: underline;
+            text-underline-offset: 6px; /* Space between text and line */
+        }
+
+        /* --- Glowing 'Ask AI' Button --- */
         [data-testid="stPopover"] > button {
             background-color: #0d1117 !important;
             border: 2px solid var(--neon-cyan) !important;
             color: var(--neon-cyan) !important;
-            font-weight: 900 !important; /* Extra bold */
+            font-weight: 900 !important;
             box-shadow: 0 0 15px rgba(0, 243, 255, 0.3), inset 0 0 10px rgba(0, 243, 255, 0.1) !important;
             transition: all 0.3s ease-in-out;
             border-radius: 8px !important;
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
-        
         [data-testid="stPopover"] > button:hover {
             box-shadow: 0 0 25px var(--neon-cyan), inset 0 0 15px var(--neon-cyan) !important;
             color: #ffffff !important;
             text-shadow: 0 0 8px var(--neon-cyan);
             transform: scale(1.05);
-            border-color: #00f3ff !important;
+            border-color: #ffffff !important;
         }
 
-        /* --- 2. CHAT POPUP VISIBILITY FIXES --- */
-        
-        /* Force text inside chat messages to be dark (since popover is white) */
-        div[data-testid="stChatMessageContent"] p {
-            color: #333333 !important; 
-            font-weight: 500;
-        }
+        /* --- Chat Popup Fixes --- */
+        div[data-testid="stChatMessageContent"] p { color: #333333 !important; font-weight: 500; }
+        div[data-testid="stPopoverBody"] textarea { background-color: #f0f2f6 !important; color: black !important; }
+        div[data-testid="stPopoverBody"] button[kind="primary"] { background-color: var(--neon-cyan) !important; border: none !important; }
+        div[data-testid="stPopoverBody"] button[kind="primary"] svg { fill: black !important; }
 
-        /* Fix the Chat Input Box inside the Popover */
-        div[data-testid="stPopoverBody"] textarea {
-            background-color: #f0f2f6 !important; /* Light grey background */
-            color: #000000 !important; /* Black text */
-            border: 1px solid #ccc !important;
-        }
-        
-        /* Fix Placeholder Text Visibility */
-        div[data-testid="stPopoverBody"] textarea::placeholder {
-            color: #666666 !important;
-            opacity: 1 !important;
-        }
-
-        /* Make the 'Send' arrow button visible */
-        div[data-testid="stPopoverBody"] button[kind="primary"] {
-            background-color: var(--neon-cyan) !important;
-            border: none !important;
-        }
-        div[data-testid="stPopoverBody"] button[kind="primary"] svg {
-            fill: black !important;
-        }
-
-        /* --- Other Components --- */
+        /* --- Standard Buttons --- */
         .stButton > button {
             background: var(--neon-cyan) !important;
             color: #000000 !important;
@@ -150,7 +142,6 @@ def load_custom_css():
         }
         .stButton > button:hover { transform: scale(1.02); box-shadow: 0 0 10px var(--neon-cyan); }
 
-        /* Sidebar */
         [data-testid="stSidebar"] { background-color: #010409; border-right: 1px solid #30363d; }
     </style>
     """, unsafe_allow_html=True)
@@ -212,7 +203,6 @@ def render_header():
     logo_html = "⚡ NexaBuild"
     if os.path.exists("images"):
         logo_file = next((f for f in os.listdir("images") if f.lower().startswith("logo.")), None)
-
         if logo_file:
             try:
                 with open(os.path.join("images", logo_file), "rb") as f:
@@ -223,15 +213,15 @@ def render_header():
             except Exception as e:
                 print(f"Error loading logo: {e}")
 
-    # --- HEADER LAYOUT WITH BUTTON ---
     c_nav, c_bot = st.columns([6, 1], gap="small")
     
     with c_nav:
+        # Clean HTML using the classes defined in CSS
         st.markdown(f"""
         <div class="nav-container">
             <div class="nav-logo">{logo_html}</div>
             <div class="nav-links">
-                <a href="https://nexabuild.streamlit.app/">Home</a>
+                <a href="?nav=home" target="_self">Home</a>
                 <a href="#">About</a>
                 <a href="mailto:ahmedaqib152@gmail.com">Contact</a>
             </div>
@@ -239,41 +229,30 @@ def render_header():
         """, unsafe_allow_html=True)
         
     with c_bot:
-        # --- POPUP CHATBOT ---
+        # Chatbot Button
         with st.popover("🤖 Ask AI", use_container_width=True):
             st.caption("Chat with NexaBot")
-            
-            # 1. Show History
             for msg in st.session_state.nexabot_history:
-                # Display 'user' or 'assistant' (mapped from model)
                 st.chat_message(msg["role"]).write(msg["content"])
 
-            # 2. Chat Input
             if prompt := st.chat_input("Ask NexaBot..."):
                 st.session_state.nexabot_history.append({"role": "user", "content": prompt})
                 st.rerun()
 
-            # 3. Generate Reply
             if st.session_state.nexabot_history and st.session_state.nexabot_history[-1]["role"] == "user":
                 with st.spinner("Thinking..."):
                     try:
-                        # Instantiate the class from ai/chatbot.py
                         bot = NexaBot()
-                        
-                        # Convert UI history to Gemini history format (role: 'user'/'model', parts: 'text')
-                        gemini_history = []
+                        history_context = []
                         for m in st.session_state.nexabot_history[:-1]:
                             role_api = "user" if m["role"] == "user" else "model"
-                            gemini_history.append({"role": role_api, "parts": m["content"]})
+                            history_context.append({"role": role_api, "parts": m["content"]})
 
-                        # Get response
-                        response_text = bot.ask(st.session_state.nexabot_history[-1]["content"], gemini_history)
-                        
+                        response_text = bot.ask(st.session_state.nexabot_history[-1]["content"], history_context)
                         st.session_state.nexabot_history.append({"role": "assistant", "content": response_text})
                         st.rerun()
                     except Exception as e:
                         st.error(f"AI Error: {e}")
-
 
 def render_footer():
     st.markdown("""
@@ -397,45 +376,72 @@ def render_workspace():
             st.warning("No files generated yet.")
 
     # --- CODE TAB ---
-    with t2:
-        c_list, c_edit = st.columns([1, 3])
-        with c_list:
-            file_keys = list(st.session_state.files.keys()) if st.session_state.files else []
-            f_sel = None
-            if file_keys:
-                try:
-                    f_sel = st.radio("File", file_keys)
-                except Exception:
-                    f_sel = st.selectbox("File", file_keys)
-        with c_edit:
-            if f_sel:
-                file_content = st.session_state.files.get(f_sel, "")
-                if not isinstance(file_content, str):
-                    file_content = str(file_content)
+    with tab_code:
+        col_list, col_editor = st.columns([1, 4])
 
-                new_code = st.text_area("Edit", file_content, height=600, key=f"e_{f_sel}")
-                if new_code != str(st.session_state.files.get(f_sel, "")) and st.button("Save", key=f"save_{f_sel}"):
-                    st.session_state.files[f_sel] = new_code
+        with col_list:
+            st.markdown("##### Files")
+            selected_file = st.radio("Select File", list(st.session_state.files.keys()), label_visibility="collapsed")
+
+        with col_editor:
+            st.markdown(f"##### Editing: `{selected_file}`")
+            # This text area is styled by CSS to look like VS Code
+            new_code = st.text_area(
+                "Code Editor",
+                value=st.session_state.files[selected_file],
+                height=600,
+                label_visibility="collapsed",
+                key=f"editor_{selected_file}"
+            )
+
+            if new_code != st.session_state.files[selected_file]:
+                if st.button(f"💾 Save Changes to {selected_file}"):
+                    st.session_state.files[selected_file] = new_code
+                    st.success("File Saved!")
                     st.rerun()
     
     # --- DEPLOY TAB ---
-    with t3:
-        if st.session_state.files:
-            try:
-                zip_bytes = create_zip_bytes(st.session_state.files)
-                st.download_button("⬇️ ZIP", zip_bytes, "site.zip", "application/zip")
-            except Exception as e:
-                st.error(f"Error creating ZIP: {e}")
+   with tab_deploy:
+        st.markdown("### 📦 Export Project")
 
-            repo = st.text_input("Repo Name", "nexa-site")
-            tok = st.text_input("GitHub Token", type="password")
-            if st.button("Deploy"):
-                try:
-                    result = GitHubDeployer(tok).deploy_to_github_pages(repo, st.session_state.files)
-                    url = result.get("url") if isinstance(result, dict) else str(result)
-                    st.success(f"Live: {url}")
-                except Exception as e:
-                    st.error(f"Error: {e}")
+        # Download Box
+        st.markdown("""
+        <div class="glass-card" style="border-left: 4px solid var(--neon-cyan);">
+            <h4>Download Source Code</h4>
+            <p>Get the full source code as a ZIP file to use locally or upload to Netlify/Vercel.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        zip_bytes = create_zip_bytes(st.session_state.files)
+        st.download_button(
+            label="⬇️ Download ZIP Package",
+            data=zip_bytes,
+            file_name="my-website-project.zip",
+            mime="application/zip",
+            type="primary"
+        )
+
+        st.markdown("---")
+        st.markdown("### 🐙 GitHub Pages Deploy")
+
+        col_d1, col_d2 = st.columns(2)
+        with col_d1:
+            repo_name = st.text_input("Repository Name", "my-ai-site")
+        with col_d2:
+            gh_token = st.text_input("GitHub Token", type="password")
+
+        if st.button("🚀 Deploy to GitHub"):
+            if not gh_token:
+                st.error("GitHub Token is required.")
+            else:
+                with st.spinner("Deploying..."):
+                    try:
+                        deployer = GitHubDeployer(gh_token)
+                        res = deployer.deploy_to_github_pages(repo_name, st.session_state.files)
+                        st.success(f"Live at: {res['url']}")
+                        st.markdown(f"[Open Website]({res['url']})")
+                    except Exception as e:
+                        st.error(f"Deploy failed: {e}")
     render_footer()
 
 if st.session_state.page == "home":
