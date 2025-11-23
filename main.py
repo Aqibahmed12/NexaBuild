@@ -48,9 +48,9 @@ if st.query_params.get("nav") == "home":
 # 1. CSS & Styling
 # -------------------------------------------------------
 def load_custom_css():
-    # Note: CSS below intentionally scopes overrides to avoid breaking Streamlit core styles.
-    # It makes the header sticky and ensures it is visible above Streamlit's top bar.
-    # It also targets multiple selectors for the NexaBot popover button to work across Streamlit versions.
+    # Note: CSS carefully scopes rules to avoid breaking Streamlit core.
+    # Adjusted z-index layering so the popover (NexaBot) sits above the custom header,
+    # and added neon glow border to the chat box inside the popover.
     st.markdown("""
     <style>
         /* --- Global Variables --- */
@@ -65,12 +65,14 @@ def load_custom_css():
             --vscode-bg: #1e1e1e;
             --vscode-fg: #d4d4d4;
 
-            /* Adjust if Streamlit topbar height differs in your environment.
-               Increase this value if your custom header is still behind the Streamlit header. */
-            --streamlit-header-height: 56px;
+            /* Layering: keep nav beneath popovers but above page content */
+            --streamlit-header-height: 56px; /* adjust if your Streamlit topbar is taller */
             --nav-vertical-offset: calc(var(--streamlit-header-height) + 12px);
             --nav-height: 64px;
             --max-content-width: 1200px;
+
+            --nav-z: 1050;
+            --popover-z: 2150;
         }
 
         /* --- App base and spacing --- */
@@ -100,7 +102,7 @@ def load_custom_css():
             transform: translateX(-50%);
             width: calc(100% - 40px);
             max-width: var(--max-content-width);
-            z-index: 2147483647; /* very high to ensure it's above Streamlit's bar */
+            z-index: var(--nav-z);
             height: var(--nav-height);
             background: linear-gradient(180deg, rgba(22,27,34,0.98), rgba(16,20,24,0.9));
             backdrop-filter: blur(8px);
@@ -156,12 +158,12 @@ def load_custom_css():
             font-weight: bold;
         }
 
-        /* --- Buttons --- */
-        .stButton > button,
-        [data-testid="stFormSubmitButton"] > button,
+        /* --- Buttons & Popover Button Styling (NexaBot) --- */
+        /* Broadened selectors to match different Streamlit versions and renderings */
         button[data-testid="stPopoverOpenButton"],
+        button[aria-label*="NexaBot"],
         [data-testid="stPopover"] > button,
-        button[aria-label*="NexaBot"] {
+        button[title*="NexaBot"] {
             background-color: var(--neon-cyan) !important;
             color: #000 !important;
             border: none !important;
@@ -169,10 +171,12 @@ def load_custom_css():
             padding: 8px 14px !important;
             border-radius: 10px !important;
             transition: all 0.18s ease-in-out !important;
-            box-shadow: 0 6px 18px rgba(0,243,255,0.06);
+            box-shadow: 0 8px 30px rgba(0,243,255,0.08) !important;
+            position: relative !important;
+            z-index: calc(var(--popover-z) + 2) !important; /* ensure button itself is above header */
         }
 
-        /* Ensure any inner text or icons adopt the desired color */
+        /* Make sure inner text / icon colors stick */
         button[data-testid="stPopoverOpenButton"] span,
         button[aria-label*="NexaBot"] span,
         button[data-testid="stPopoverOpenButton"] svg,
@@ -183,28 +187,91 @@ def load_custom_css():
             fill: #000 !important;
         }
 
-        /* Consistent hover for all primary buttons (glow + slight scale) */
-        .stButton > button:hover,
-        [data-testid="stFormSubmitButton"] > button:hover,
+        /* Hover effect: glow + slight scale */
         button[data-testid="stPopoverOpenButton"]:hover,
-        [data-testid="stPopover"] > button:hover,
-        button[aria-label*="NexaBot"]:hover {
-            transform: translateY(-2px) scale(1.05) !important;
-            box-shadow: 0 0 40px rgba(0,243,255,0.22) !important;
+        button[aria-label*="NexaBot"]:hover,
+        [data-testid="stPopover"] > button:hover {
+            transform: translateY(-2px) scale(1.06) !important;
+            box-shadow: 0 0 48px rgba(0,243,255,0.28) !important;
+        }
+
+        /* --- Popover container and body layering --- */
+        /* Ensure the opened popover panel floats above the nav */
+        div[data-testid="stPopover"] {
+            position: relative !important;
+            z-index: calc(var(--popover-z) + 3) !important;
+        }
+        /* Body is typically appended under same node; ensure content has very high z-index */
+        div[data-testid="stPopoverBody"] {
+            position: relative !important;
+            z-index: calc(var(--popover-z) + 4) !important;
+            background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,250,250,0.96));
+            color: #000;
+            border-radius: 12px;
+            padding: 12px !important;
+            /* Small offset so the body shows below the open button and above the nav visually */
+            margin-top: 8px !important;
+            box-shadow: 0 12px 60px rgba(0,0,0,0.45), 0 0 30px rgba(0,243,255,0.12);
+            border: 1px solid rgba(0,243,255,0.12);
+        }
+
+        /* --- Neon glowing border for the central chat box inside the popover --- */
+        /* This targets the chat message container and chat box area in the popover */
+        div[data-testid="stPopoverBody"] .stChat,
+        div[data-testid="stPopoverBody"] div[data-testid="stChatMessageContent"],
+        div[data-testid="stPopoverBody"] .stChatMessage,
+        div[data-testid="stPopoverBody"] .stChatMessageBlock,
+        div[data-testid="stPopoverBody"] .stChatInput {
+            border-radius: 12px !important;
+        }
+
+        /* Apply neon glow border to the main area (middle chat box) */
+        div[data-testid="stPopoverBody"] > div:first-child,
+        div[data-testid="stPopoverBody"] .stChatMessageBlock,
+        div[data-testid="stPopoverBody"] .stChat {
+            box-shadow:
+                0 2px 0 rgba(0,0,0,0.6) inset,
+                0 6px 30px rgba(0,0,0,0.6),
+                0 0 20px rgba(0,243,255,0.14),
+                0 0 6px rgba(0,243,255,0.28);
+            border: 1px solid rgba(0,243,255,0.28);
+            background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,250,250,0.96));
+        }
+
+        /* Chat message text inside popover — keep readable */
+        div[data-testid="stPopoverBody"] div[data-testid="stChatMessageContent"] p {
+            color: #001019 !important;
+            font-weight: 500 !important;
+        }
+
+        /* Chat input area: neon focus glow */
+        div[data-testid="stPopoverBody"] textarea:focus,
+        div[data-testid="stPopoverBody"] input:focus {
+            outline: none !important;
+            box-shadow: 0 0 24px rgba(0,243,255,0.32) !important;
+            border: 1px solid rgba(0,243,255,0.4) !important;
+        }
+
+        /* --- Generic Buttons, Forms & Sidebar --- */
+        .stButton > button,
+        [data-testid="stFormSubmitButton"] > button {
             background-color: var(--neon-cyan) !important;
             color: #000 !important;
+            border: none !important;
+            font-weight: 800 !important;
+            padding: 8px 14px !important;
+            border-radius: 10px !important;
+            transition: all 0.18s ease-in-out !important;
+            box-shadow: 0 6px 18px rgba(0,243,255,0.06);
         }
 
-        /* Slightly stronger style for popover (NexaBot) button */
-        button[data-testid="stPopoverOpenButton"],
-        button[aria-label*="NexaBot"],
-        [data-testid="stPopover"] > button {
-            color: #000 !important;
-            font-weight: 900 !important;
-            letter-spacing: 0.2px !important;
+        .stButton > button:hover,
+        [data-testid="stFormSubmitButton"] > button:hover {
+            transform: translateY(-2px) scale(1.03) !important;
+            box-shadow: 0 0 30px rgba(0,243,255,0.18) !important;
         }
 
-        /* --- Form card styling --- */
+        /* --- Form & Label Styling --- */
         [data-testid="stForm"] {
             background: rgba(255,255,255,0.03);
             padding: 20px;
@@ -212,35 +279,18 @@ def load_custom_css():
             border: 1px solid #262b30;
         }
 
-        /* Form labels */
         div[data-testid="stWidgetLabel"] p,
         div[data-testid="stWidgetLabel"] label {
             color: #ffffff !important;
             font-weight: 600 !important;
         }
 
-        /* --- Chat Popover (NexaBot) internals: scope carefully to popover only --- */
-        div[data-testid="stPopoverBody"] div[data-testid="stChatMessageContent"] p {
-            color: #111 !important;
-            font-weight: 500 !important;
-        }
-        div[data-testid="stPopoverBody"] textarea {
-            background-color: #f6fbfb !important;
-            color: #000 !important;
-        }
-        div[data-testid="stPopoverBody"] button[kind="primary"] {
-            background-color: var(--neon-cyan) !important;
-            border: none !important;
-            color: #000 !important;
-        }
-        div[data-testid="stPopoverBody"] button[kind="primary"] svg { fill: #000 !important; }
-
         /* Sidebar: keep readable and consistent */
         [data-testid="stSidebar"] {
             background-color: #010409;
             border-right: 1px solid #1f2937;
             color: var(--text-primary);
-            padding-top: calc(var(--header-height) / 2);
+            padding-top: calc(var(--nav-height) / 2);
         }
         [data-testid="stSidebar"] .stMarkdown, 
         [data-testid="stSidebar"] label, 
@@ -256,7 +306,7 @@ def load_custom_css():
         }
 
         /* Tabs & workspace spacing adjustments */
-        .stTabs, .css-1v3fvcr { /* fallback generic class for tabs container */
+        .stTabs, .css-1v3fvcr {
             margin-top: 8px;
         }
         .stApp .stTabs [role="tablist"] { gap: 8px; }
@@ -272,8 +322,6 @@ def load_custom_css():
             padding-top: 6px;
             padding-bottom: 6px;
         }
-
-        /* Avoid styling Streamlit core message components globally - keep scoped rules above */
     </style>
     """, unsafe_allow_html=True)
 
@@ -345,7 +393,7 @@ def render_header():
         
     with c_bot:
         # Chatbot Button
-        # Keep behavior intact; styling targets the popover open button using data-testid and aria-label selectors.
+        # Keep behavior intact; styling targets the popover open button using robust selectors.
         with st.popover("🤖 NexaBot", use_container_width=True):
             st.caption("Hey Buddy! Do you need help? Ask NexaBot")
             for msg in st.session_state.nexabot_history:
