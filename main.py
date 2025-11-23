@@ -331,10 +331,7 @@ def render_workspace():
 
 
     render_header()
-
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.subheader("🛠️ Developer Workspace")
+    st.subheader("🛠️ Developer Workspace")
     st.markdown("---")
 
 
