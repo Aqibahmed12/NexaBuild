@@ -10,7 +10,7 @@ import json
 from ai.utils import create_zip_bytes, WebsiteGenerator
 from ai.deploy import GitHubDeployer
 from agents.manager import ProjectManager
-from ai.chatbot import NexaBot
+from ai.chatbot import NexaBot 
 
 # -------------------------------------------------------
 # 0. Asset Helper & Config
@@ -86,61 +86,80 @@ def load_custom_css():
             display: flex; align-items: center; gap: 10px;
         }
 
-        /* --- NEON GLOWING LINKS --- */
-        .nav-links {
-            display: flex;
-            gap: 30px; 
-        }
+        /* --- Nav Links --- */
+        .nav-links { display: flex; gap: 30px; }
         .nav-links a {
-            color: #c9d1d9;
-            text-decoration: none;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.3s ease; 
-            display: inline-block;
+            color: #c9d1d9; text-decoration: none; font-size: 1rem; font-weight: 600;
+            transition: all 0.3s ease; display: inline-block;
         }
-        
-        /* Hover Effects */
         .nav-links a:hover {
-            color: #00f3ff; 
-            text-shadow: 0 0 10px #00f3ff, 0 0 20px #00f3ff; 
-            transform: scale(1.2); 
-            text-decoration: underline;
-            text-underline-offset: 6px; 
+            color: #00f3ff; text-shadow: 0 0 10px #00f3ff;
+            transform: scale(1.2); text-decoration: underline; text-underline-offset: 6px;
         }
 
-        /* --- Glowing 'Ask AI' Button --- */
+        /* --- BUTTONS (Launch Team & Ask AI) --- */
+        /* Force high contrast: Cyan Background, Black Text */
+        
+        /* 1. Ask AI Popover Button */
         [data-testid="stPopover"] > button {
-            background-color: #0d1117 !important;
-            border: 2px solid var(--neon-cyan) !important;
-            color: var(--neon-cyan) !important;
+            background-color: var(--neon-cyan) !important;
+            color: #000000 !important;
+            border: none !important;
             font-weight: 900 !important;
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3), inset 0 0 10px rgba(0, 243, 255, 0.1) !important;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3) !important;
             transition: all 0.3s ease-in-out;
-            border-radius: 8px !important;
         }
         [data-testid="stPopover"] > button:hover {
-            box-shadow: 0 0 25px var(--neon-cyan), inset 0 0 15px var(--neon-cyan) !important;
-            color: #ffffff !important;
-            text-shadow: 0 0 8px var(--neon-cyan);
             transform: scale(1.05);
-            border-color: #ffffff !important;
+            box-shadow: 0 0 25px var(--neon-cyan) !important;
+            color: #000000 !important;
         }
 
-        /* --- Chat Popup Fixes --- */
+        /* 2. Form Submit Button (Launch Team) */
+        [data-testid="stFormSubmitButton"] > button {
+            background-color: var(--neon-cyan) !important;
+            color: #000000 !important;
+            border: none !important;
+            font-weight: 900 !important;
+            width: 100%;
+        }
+        [data-testid="stFormSubmitButton"] > button:hover {
+            box-shadow: 0 0 15px var(--neon-cyan);
+            transform: scale(1.02);
+        }
+
+        /* 3. Generic Buttons */
+        .stButton > button {
+            background-color: var(--neon-cyan) !important;
+            color: #000000 !important;
+            border: none; font-weight: bold;
+        }
+
+        /* --- FORM & LABELS FIXES --- */
+        
+        /* Style the Form Container to look like a card */
+        [data-testid="stForm"] {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #30363d;
+        }
+
+        /* Make 'Describe your project' Label White */
+        div[data-testid="stWidgetLabel"] p {
+            color: #ffffff !important;
+            font-size: 1rem !important;
+            font-weight: 600 !important;
+        }
+        div[data-testid="stWidgetLabel"] label {
+            color: #ffffff !important;
+        }
+
+        /* --- Chat Popup Internals --- */
         div[data-testid="stChatMessageContent"] p { color: #333333 !important; font-weight: 500; }
         div[data-testid="stPopoverBody"] textarea { background-color: #f0f2f6 !important; color: black !important; }
         div[data-testid="stPopoverBody"] button[kind="primary"] { background-color: var(--neon-cyan) !important; border: none !important; }
         div[data-testid="stPopoverBody"] button[kind="primary"] svg { fill: black !important; }
-
-        /* --- Standard Buttons --- */
-        .stButton > button {
-            background: var(--neon-cyan) !important;
-            color: #000000 !important;
-            border: none; font-weight: bold;
-            transition: transform 0.2s;
-        }
-        .stButton > button:hover { transform: scale(1.02); box-shadow: 0 0 10px var(--neon-cyan); }
 
         [data-testid="stSidebar"] { background-color: #010409; border-right: 1px solid #30363d; }
     </style>
@@ -264,15 +283,15 @@ def render_home():
                 </p>
             </div>
             """, unsafe_allow_html=True)
-        st.markdown(
-            "<div style='background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; border: 1px solid #30363d;'>",
-            unsafe_allow_html=True)
+        
+        # FIX: Removed the extra st.markdown div wrappers. 
+        # The Form is now styled directly via CSS targeting [data-testid="stForm"]
+        
         with st.form("create_form"):
             prompt = st.text_area("Describe your project", height=150,
                                   placeholder="E.g., A Todo app where I can add, delete and save tasks permanently.")
             submitted = st.form_submit_button("🚀 Launch Team")
-        st.markdown("</div>", unsafe_allow_html=True)
-
+        
         if submitted and prompt:
             manager = ProjectManager()
             with st.spinner("Agents working..."):
