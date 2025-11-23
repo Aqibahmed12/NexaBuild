@@ -223,34 +223,34 @@ def load_custom_css():
         button[aria-label*="NexaBot"],
         [data-testid="stPopover"] > button,
         button[title*="NexaBot"] {
-            background: linear-gradient(90deg, var(--neon-purple), var(--neon-cyan)) !important;
-            color: #ffffff !important;
-            border: none !important;
+            background: linear-gradient(90deg, #8a2be2, #00ffff) !important; /* neon purple → cyan */
+            color: #000000 !important; /* text black */
+            border: 2px solid #00ffff !important; /* neon border */
             font-weight: 800 !important;
             padding: 8px 14px !important;
             border-radius: 10px !important;
             transition: all 0.18s ease-in-out !important;
-            box-shadow: 0 8px 28px rgba(124,58,237,0.12) !important;
+            box-shadow: 0 0 10px #8a2be2, 0 0 20px #00ffff, 0 0 30px #8a2be2, 0 0 40px #00ffff !important; /* glowing shadow */
             position: relative !important;
             z-index: calc(var(--popover-z) + 2) !important;
         }
 
-        /* Ensure icons/text inside the NexaBot button are white */
+        /* Icons/text inside the button */
         button[data-testid="stPopoverOpenButton"] span,
         button[aria-label*="NexaBot"] span,
         button[data-testid="stPopoverOpenButton"] svg,
         button[aria-label*="NexaBot"] svg,
         [data-testid="stPopover"] > button span,
         [data-testid="stPopover"] > button svg {
-            color: #ffffff !important;
-            fill: #ffffff !important;
+            color: #000000 !important; /* text black */
+            fill: #000000 !important;
         }
 
         button[data-testid="stPopoverOpenButton"]:hover,
         button[aria-label*="NexaBot"]:hover,
         [data-testid="stPopover"] > button:hover {
             transform: translateY(-2px) scale(1.04) !important;
-            box-shadow: 0 12px 40px rgba(124,58,237,0.18) !important;
+            box-shadow: 0 0 15px #8a2be2, 0 0 25px #00ffff, 0 0 35px #8a2be2, 0 0 50px #00ffff !important; /* stronger glow on hover */
         }
 
         /* Popover container: remove hard borders and reduce heavy border-like glows */
@@ -405,7 +405,7 @@ def render_home():
     render_header()
     
     # --- CHANGED: Layout ---
-    c1, c2, c3 = st.columns([1, 2.5, 0.5])
+    c1, c2, c3 = st.columns([1, 2, 1])
     
     # Middle Column: Text & Form
     with c2:
@@ -418,7 +418,7 @@ def render_home():
                     text-stroke: 0.8px #000;">
                     Build something <br> Unbelievable
                 </h1>
-                <p style="font-size: 1.05rem; color: #94a3b8; max-width: 720px; margin: 0 auto;">
+                <p style="font-size: 1.5rem; color: #94a3b8; max-width: 720px; margin: 0 auto;">
                     The AI Website Builder that thinks like a developer. <br>
                     From idea to full-stack app in seconds.
                 </p>
@@ -427,7 +427,7 @@ def render_home():
 
         
         with st.form("create_form"):
-            prompt = st.text_area("Describe your project", height=150,
+            prompt = st.text_area("Describe your project" , height=150,
                                   placeholder="E.g., A Todo app where I can add, delete and save tasks permanently.")
             submitted = st.form_submit_button("🚀 Generate")
         
