@@ -48,6 +48,8 @@ if st.query_params.get("nav") == "home":
 # 1. CSS & Styling
 # -------------------------------------------------------
 def load_custom_css():
+    # Note: CSS below intentionally scopes some overrides to avoid breaking Streamlit core styles.
+    # It also makes the header sticky (fixed) and adds top padding to the app so content is not hidden.
     st.markdown("""
     <style>
         /* --- Global Variables --- */
@@ -61,49 +63,85 @@ def load_custom_css():
             --text-white: #ffffff;
             --vscode-bg: #1e1e1e;
             --vscode-fg: #d4d4d4;
+            --header-height: 76px;
+            --max-content-width: 1200px;
         }
 
-        .stApp { background-color: var(--bg-color); color: var(--text-primary); }
+        /* --- App base and spacing --- */
+        .stApp {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            /* Add top padding so the fixed header does not overlap content */
+            padding-top: calc(var(--header-height) + 20px);
+        }
+
+        /* Constrain main content for a balanced layout */
+        .block-container {
+            max-width: var(--max-content-width);
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
         h1, h2, h3 { color: var(--text-white) !important; font-family: 'Inter', sans-serif; }
-        
-        /* --- Navbar Container --- */
+
+        /* --- Header (sticky/fixed) --- */
         .nav-container {
-            background: rgba(22, 27, 34, 0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border-color);
-            padding: 10px 20px;
+            position: fixed;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 40px);
+            max-width: var(--max-content-width);
+            z-index: 9999;
+            background: linear-gradient(180deg, rgba(22,27,34,0.95), rgba(16,20,24,0.85));
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-color);
+            padding: 12px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-radius: 10px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
         }
+
+        /* Logo */
         .nav-logo {
-            font-size: 1.5rem;
-            font-weight: bold;
+            font-size: 1.25rem;
+            font-weight: 800;
             background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            display: flex; align-items: center; gap: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        /* --- Nav Links --- */
-        .nav-links { display: flex; gap: 30px; }
+        /* Nav Links */
+        .nav-links { display: flex; gap: 22px; align-items: center; }
         .nav-links a {
-            color: #c9d1d9; text-decoration: none; font-size: 1rem; font-weight: 600;
-            transition: all 0.3s ease; display: inline-block;
+            color: #c9d1d9; text-decoration: none; font-size: 0.95rem; font-weight: 700;
+            transition: all 0.25s ease; display: inline-block;
+            padding: 6px 10px; border-radius: 8px;
         }
         .nav-links a:hover {
-            color: #00f3ff; text-shadow: 0 0 10px #00f3ff;
-            transform: scale(1.2); text-decoration: underline; text-underline-offset: 6px;
+            color: #000;
+            background: var(--neon-cyan);
+            text-decoration: none;
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 6px 20px rgba(0,243,255,0.12);
         }
 
+        /* --- Footer --- */
         .footer-container {
-            margin-top: 50px;
+            margin-top: 60px;
             padding: 30px;
             border-top: 1px solid var(--border-color);
             text-align: center;
             background: var(--card-bg);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            border-radius: 10px;
         }
         .footer-link {
             color: var(--neon-cyan);
@@ -111,79 +149,114 @@ def load_custom_css():
             font-weight: bold;
         }
 
-        /* --- BUTTONS (Launch Team & Ask AI) --- */
-        /* Force high contrast: Cyan Background, Black Text */
-        
-        /* 1. Ask AI Popover Button */
-        /* --- FIX: NexaBot Top Right Button --- */
+        /* --- Buttons --- */
+        .stButton > button,
+        [data-testid="stFormSubmitButton"] > button,
+        button[data-testid="stPopoverOpenButton"],
         [data-testid="stPopover"] > button {
             background-color: var(--neon-cyan) !important;
-            color: #000000 !important;  /* BLACK TEXT for visibility */
+            color: #000 !important;
             border: none !important;
-            font-weight: 900 !important;
-            padding: 8px 18px !important;
-            border-radius: 8px !important;
-            box-shadow: 0 0 12px rgba(0, 243, 255, 0.4) !important;
-            transition: all 0.3s ease-in-out;
+            font-weight: 800 !important;
+            padding: 8px 14px !important;
+            border-radius: 10px !important;
+            transition: all 0.18s ease-in-out !important;
+            box-shadow: 0 6px 18px rgba(0,243,255,0.06);
         }
 
-        /* Hover effect like Generate button */
+        /* Consistent hover for all primary buttons (glow + slight scale) */
+        .stButton > button:hover,
+        [data-testid="stFormSubmitButton"] > button:hover,
+        button[data-testid="stPopoverOpenButton"]:hover,
         [data-testid="stPopover"] > button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 25px var(--neon-cyan) !important;
+            transform: translateY(-2px) scale(1.03) !important;
+            box-shadow: 0 0 30px rgba(0,243,255,0.18) !important;
             background-color: var(--neon-cyan) !important;
-            color: #000000 !important;
+            color: #000 !important;
         }
 
-        /* 2. Form Submit Button (Launch Team) */
-        [data-testid="stFormSubmitButton"] > button {
-            background-color: var(--neon-cyan) !important;
-            color: #000000 !important;
-            border: none !important;
+        /* Slightly stronger style for popover (NexaBot) button: ensure text color is readable */
+        button[data-testid="stPopoverOpenButton"],
+        [data-testid="stPopover"] > button {
+            color: #000 !important;
             font-weight: 900 !important;
-            width: 100%;
-        }
-        [data-testid="stFormSubmitButton"] > button:hover {
-            box-shadow: 0 0 15px var(--neon-cyan);
-            transform: scale(1.02);
+            letter-spacing: 0.2px !important;
         }
 
-        /* 3. Generic Buttons */
-        .stButton > button {
-            background-color: var(--neon-cyan) !important;
-            color: #000000 !important;
-            border: none; font-weight: bold;
-        }
-
-        /* --- FORM & LABELS FIXES --- */
-        
-        /* Style the Form Container to look like a card */
+        /* --- Form card styling --- */
         [data-testid="stForm"] {
-            background: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.03);
             padding: 20px;
             border-radius: 10px;
-            border: 1px solid #30363d;
+            border: 1px solid #262b30;
         }
 
-        /* Make 'Describe your project' Label White */
-        div[data-testid="stWidgetLabel"] p {
-            color: #ffffff !important;
-            font-size: 1rem !important;
-            font-weight: 600 !important;
-        }
+        /* Form labels */
+        div[data-testid="stWidgetLabel"] p,
         div[data-testid="stWidgetLabel"] label {
             color: #ffffff !important;
+            font-weight: 600 !important;
         }
 
-        /* --- Chat Popup Internals --- */
-        div[data-testid="stChatMessageContent"] p { color: #333333 !important; font-weight: 500; }
-        div[data-testid="stPopoverBody"] textarea { background-color: #f0f2f6 !important; color: black !important; }
-        div[data-testid="stPopoverBody"] button[kind="primary"] { background-color: var(--neon-cyan) !important; border: none !important; }
-        div[data-testid="stPopoverBody"] button[kind="primary"] svg { fill: black !important; }
+        /* --- Chat Popover (NexaBot) internals: scope carefully to popover only --- */
+        div[data-testid="stPopoverBody"] div[data-testid="stChatMessageContent"] p {
+            color: #111 !important;
+            font-weight: 500 !important;
+        }
+        div[data-testid="stPopoverBody"] textarea {
+            background-color: #f6fbfb !important;
+            color: #000 !important;
+        }
+        div[data-testid="stPopoverBody"] button[kind="primary"] {
+            background-color: var(--neon-cyan) !important;
+            border: none !important;
+            color: #000 !important;
+        }
+        div[data-testid="stPopoverBody"] button[kind="primary"] svg { fill: #000 !important; }
 
-        [data-testid="stSidebar"] { background-color: #010409; border-right: 1px solid #30363d; }
+        /* Sidebar: keep readable and consistent */
+        [data-testid="stSidebar"] {
+            background-color: #010409;
+            border-right: 1px solid #1f2937;
+            color: var(--text-primary);
+            padding-top: calc(var(--header-height) / 2);
+        }
+        [data-testid="stSidebar"] .stMarkdown, 
+        [data-testid="stSidebar"] label, 
+        [data-testid="stSidebar"] p {
+            color: var(--vscode-fg) !important;
+        }
+        [data-testid="stSidebar"] input, 
+        [data-testid="stSidebar"] textarea, 
+        [data-testid="stSidebar"] select {
+            background-color: #0f1720 !important;
+            color: var(--vscode-fg) !important;
+            border: 1px solid #25303a !important;
+        }
+
+        /* Tabs & workspace spacing adjustments */
+        .stTabs, .css-1v3fvcr { /* fallback generic class for tabs container */
+            margin-top: 8px;
+        }
+        .stApp .stTabs [role="tablist"] { gap: 8px; }
+
+        /* Make preview iframe area nicely spaced and centered */
+        .stApp .stComponentsPlaceholder, .stApp iframe {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* Balance column paddings across the app */
+        .row-widget.stRadio, .row-widget.stMultiselect, .row-widget.stTextArea {
+            padding-top: 6px;
+            padding-bottom: 6px;
+        }
+
+        /* Minor adjustments that remove overly aggressive overrides */
+        /* Avoid styling Streamlit core message components globally - keep scoped rules above */
     </style>
     """, unsafe_allow_html=True)
+
 load_custom_css()
 
 # -------------------------------------------------------
@@ -228,16 +301,20 @@ def render_header():
                     encoded_string = base64.b64encode(f.read()).decode()
                 ext = logo_file.split('.')[-1].lower()
                 mime_type = f"image/{'svg+xml' if ext == 'svg' else ext}"
-                logo_html = f'<img src="data:{mime_type};base64,{encoded_string}" style="height: 40px; border-radius: 6px;"> NexaBuild'
+                logo_html = f'<img src="data:{mime_type};base64,{encoded_string}" style="height: 36px; border-radius: 6px; margin-right:8px;"> NexaBuild'
             except Exception as e:
                 print(f"Error loading logo: {e}")
 
+    # Use two columns: main nav and the chatbot button column (kept small)
     c_nav, c_bot = st.columns([6, 1], gap="small")
     
     with c_nav:
+        # Render fixed header markup. The CSS above makes .nav-container fixed and prevents overlap.
         st.markdown(f"""
         <div class="nav-container">
-            <div class="nav-logo">{logo_html}</div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div class="nav-logo">{logo_html}</div>
+            </div>
             <div class="nav-links">
                 <a href="?nav=home" target="_self">Home</a>
                 <a href="#">About</a>
@@ -248,6 +325,7 @@ def render_header():
         
     with c_bot:
         # Chatbot Button
+        # Keep behavior intact; styling targets the popover open button using data-testid selectors.
         with st.popover("🤖 NexaBot", use_container_width=True):
             st.caption("Hey Buddy! Do you need help? Ask NexaBot")
             for msg in st.session_state.nexabot_history:
@@ -278,7 +356,7 @@ def render_footer():
         <p>Made with ❤️ by the NexaBuild team</p>
         <p>If you need help, look at the top-right corner — NexaBot is always ready for you</p>
         <p>Need help? <a href="mailto:ahmedaqib152@gmail.com" class="footer-link">Contact Support (nexabuild@gmail.com)</a></p>
-        <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">© 2025 NexaBuild. All rights reserved</p>
+        <p style="font-size: 0.8rem; color: #9ca3af; margin-top: 10px;">© 2025 NexaBuild. All rights reserved</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -291,14 +369,14 @@ def render_home():
     with c2:
         st.markdown("""
             <div style='text-align: center; margin-bottom: 40px;'>
-                <h1 style="font-size: 4rem; font-weight: 900; letter-spacing: -0.03em; line-height: 1.1; margin-bottom:1rem; 
+                <h1 style="font-size: 3.5rem; font-weight: 900; letter-spacing: -0.03em; line-height: 1.05; margin-bottom:1rem; 
                     color: #00ffff;
                     text-shadow: 0 0 2px #00ffff, 0 0 5px #00ffff, 0 0 10px #00ffff;
-                    -webkit-text-stroke: 1px #000;
-                    text-stroke: 1px #000;">
+                    -webkit-text-stroke: 0.8px #000;
+                    text-stroke: 0.8px #000;">
                     Build something <br> Unbelievable
                 </h1>
-                <p style="font-size: 1.25rem; color: #94a3b8; max-width: 600px; margin: 0 auto;">
+                <p style="font-size: 1.05rem; color: #94a3b8; max-width: 720px; margin: 0 auto;">
                     The AI Website Builder that thinks like a developer. <br>
                     From idea to full-stack app in seconds.
                 </p>
@@ -384,6 +462,7 @@ def render_workspace():
                 html_content = None
 
             if html_content:
+                # Keep iframe nicely padded and scrollable
                 st.components.v1.html(html_content, height=800, scrolling=True)
         else:
             st.warning("No files generated yet.")
@@ -425,9 +504,9 @@ def render_workspace():
 
         # Download Box
         st.markdown("""
-        <div class="glass-card" style="border-left: 4px solid var(--neon-cyan);">
-            <h4>  Download Source Code</h4>
-            <p>   Get the full source code as a ZIP file to use locally or upload to Netlify/Vercel.</p>
+        <div class="glass-card" style="border-left: 4px solid var(--neon-cyan); padding:14px; border-radius:8px; background: rgba(255,255,255,0.02);">
+            <h4 style="margin-bottom:6px;">Download Source Code</h4>
+            <p style="margin-top:0; color:#9aa6b2;">Get the full source code as a ZIP file to use locally or upload to Netlify/Vercel.</p>
         </div>
         """, unsafe_allow_html=True)
 
