@@ -329,15 +329,14 @@ def render_workspace():
     if st.session_state.files:
         st.session_state.files = sanitize_files(st.session_state.files)
 
+
     render_header()
-    c1 = st.columns(3)
-    with c1:
-        st.subheader("🛠️ Developer Workspace")
-    # with c2:
-    #     if st.button("🏠 New Project"):
-    #         st.session_state.page, st.session_state.files, st.session_state.chat = "home", {}, []
-    #         st.rerun()
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.subheader("🛠️ Developer Workspace")
     st.markdown("---")
+
 
     with st.sidebar:
         st.subheader("💬 Team Chat")
