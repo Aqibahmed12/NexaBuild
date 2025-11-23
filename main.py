@@ -48,8 +48,9 @@ if st.query_params.get("nav") == "home":
 # 1. CSS & Styling
 # -------------------------------------------------------
 def load_custom_css():
-    # Note: CSS below intentionally scopes some overrides to avoid breaking Streamlit core styles.
-    # It also makes the header sticky (fixed) and adds top padding to the app so content is not hidden.
+    # Note: CSS below intentionally scopes overrides to avoid breaking Streamlit core styles.
+    # It makes the header sticky and ensures it is visible above Streamlit's top bar.
+    # It also targets multiple selectors for the NexaBot popover button to work across Streamlit versions.
     st.markdown("""
     <style>
         /* --- Global Variables --- */
@@ -63,7 +64,12 @@ def load_custom_css():
             --text-white: #ffffff;
             --vscode-bg: #1e1e1e;
             --vscode-fg: #d4d4d4;
-            --header-height: 76px;
+
+            /* Adjust if Streamlit topbar height differs in your environment.
+               Increase this value if your custom header is still behind the Streamlit header. */
+            --streamlit-header-height: 56px;
+            --nav-vertical-offset: calc(var(--streamlit-header-height) + 12px);
+            --nav-height: 64px;
             --max-content-width: 1200px;
         }
 
@@ -72,7 +78,7 @@ def load_custom_css():
             background-color: var(--bg-color);
             color: var(--text-primary);
             /* Add top padding so the fixed header does not overlap content */
-            padding-top: calc(var(--header-height) + 20px);
+            padding-top: calc(var(--nav-vertical-offset) + var(--nav-height) + 12px);
         }
 
         /* Constrain main content for a balanced layout */
@@ -89,13 +95,14 @@ def load_custom_css():
         /* --- Header (sticky/fixed) --- */
         .nav-container {
             position: fixed;
-            top: 12px;
+            top: var(--nav-vertical-offset);
             left: 50%;
             transform: translateX(-50%);
             width: calc(100% - 40px);
             max-width: var(--max-content-width);
-            z-index: 9999;
-            background: linear-gradient(180deg, rgba(22,27,34,0.95), rgba(16,20,24,0.85));
+            z-index: 2147483647; /* very high to ensure it's above Streamlit's bar */
+            height: var(--nav-height);
+            background: linear-gradient(180deg, rgba(22,27,34,0.98), rgba(16,20,24,0.9));
             backdrop-filter: blur(8px);
             border: 1px solid var(--border-color);
             padding: 12px 20px;
@@ -103,7 +110,7 @@ def load_custom_css():
             justify-content: space-between;
             align-items: center;
             border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+            box-shadow: 0 6px 24px rgba(0,0,0,0.6);
         }
 
         /* Logo */
@@ -130,7 +137,7 @@ def load_custom_css():
             background: var(--neon-cyan);
             text-decoration: none;
             transform: translateY(-2px) scale(1.03);
-            box-shadow: 0 6px 20px rgba(0,243,255,0.12);
+            box-shadow: 0 8px 30px rgba(0,243,255,0.12);
         }
 
         /* --- Footer --- */
@@ -153,7 +160,8 @@ def load_custom_css():
         .stButton > button,
         [data-testid="stFormSubmitButton"] > button,
         button[data-testid="stPopoverOpenButton"],
-        [data-testid="stPopover"] > button {
+        [data-testid="stPopover"] > button,
+        button[aria-label*="NexaBot"] {
             background-color: var(--neon-cyan) !important;
             color: #000 !important;
             border: none !important;
@@ -164,19 +172,32 @@ def load_custom_css():
             box-shadow: 0 6px 18px rgba(0,243,255,0.06);
         }
 
+        /* Ensure any inner text or icons adopt the desired color */
+        button[data-testid="stPopoverOpenButton"] span,
+        button[aria-label*="NexaBot"] span,
+        button[data-testid="stPopoverOpenButton"] svg,
+        button[aria-label*="NexaBot"] svg,
+        [data-testid="stPopover"] > button span,
+        [data-testid="stPopover"] > button svg {
+            color: #000 !important;
+            fill: #000 !important;
+        }
+
         /* Consistent hover for all primary buttons (glow + slight scale) */
         .stButton > button:hover,
         [data-testid="stFormSubmitButton"] > button:hover,
         button[data-testid="stPopoverOpenButton"]:hover,
-        [data-testid="stPopover"] > button:hover {
-            transform: translateY(-2px) scale(1.03) !important;
-            box-shadow: 0 0 30px rgba(0,243,255,0.18) !important;
+        [data-testid="stPopover"] > button:hover,
+        button[aria-label*="NexaBot"]:hover {
+            transform: translateY(-2px) scale(1.05) !important;
+            box-shadow: 0 0 40px rgba(0,243,255,0.22) !important;
             background-color: var(--neon-cyan) !important;
             color: #000 !important;
         }
 
-        /* Slightly stronger style for popover (NexaBot) button: ensure text color is readable */
+        /* Slightly stronger style for popover (NexaBot) button */
         button[data-testid="stPopoverOpenButton"],
+        button[aria-label*="NexaBot"],
         [data-testid="stPopover"] > button {
             color: #000 !important;
             font-weight: 900 !important;
@@ -252,7 +273,6 @@ def load_custom_css():
             padding-bottom: 6px;
         }
 
-        /* Minor adjustments that remove overly aggressive overrides */
         /* Avoid styling Streamlit core message components globally - keep scoped rules above */
     </style>
     """, unsafe_allow_html=True)
@@ -325,7 +345,7 @@ def render_header():
         
     with c_bot:
         # Chatbot Button
-        # Keep behavior intact; styling targets the popover open button using data-testid selectors.
+        # Keep behavior intact; styling targets the popover open button using data-testid and aria-label selectors.
         with st.popover("🤖 NexaBot", use_container_width=True):
             st.caption("Hey Buddy! Do you need help? Ask NexaBot")
             for msg in st.session_state.nexabot_history:
