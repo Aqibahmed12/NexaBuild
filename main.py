@@ -242,8 +242,8 @@ def render_header():
         
     with c_bot:
         # Chatbot Button
-        with st.popover("🤖 Ask AI", use_container_width=True):
-            st.caption("Chat with NexaBot")
+        with st.popover("🤖 NexaBot", use_container_width=True):
+            st.caption("Hey Buddy! Do you need help? Ask NexaBot")
             for msg in st.session_state.nexabot_history:
                 st.chat_message(msg["role"]).write(msg["content"])
 
@@ -269,9 +269,10 @@ def render_header():
 def render_footer():
     st.markdown("""
     <div class="footer-container">
-        <p>Built with ❤️ using Gemini AI</p>
-        <p>Need help? <a href="mailto:nexabuild@gmail.com" class="footer-link">Contact Support (nexabuild@gmail.com)</a></p>
-        <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">© 2025 NexaBuild. All rights reserved.</p>
+        <p>Made with ❤️ by the NexaBuild team</p>
+        <p>If you need help, look at the top-right corner — NexaBot is always ready for you</p>
+        <p>Need help? <a href="mailto:ahmedaqib152@gmail.com" class="footer-link">Contact Support (nexabuild@gmail.com)</a></p>
+        <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">© 2025 NexaBuild. All rights reserved</p>
     </div>
     """, unsafe_allow_html=True)
 
