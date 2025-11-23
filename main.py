@@ -405,7 +405,7 @@ def render_home():
     render_header()
     
     # --- CHANGED: Layout ---
-    c1, c2, c3 = st.columns([1, 2, 0.5])
+    c1, c2, c3 = st.columns([1, 2.5, 0.5])
     
     # Middle Column: Text & Form
     with c2:
