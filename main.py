@@ -374,7 +374,7 @@ def render_header():
                 print(f"Error loading logo: {e}")
 
     # Use two columns: main nav and the chatbot button column (kept small)
-    c_nav, c_bot = st.columns([6, 2], gap="small")
+    c_nav, c_bot = st.columns([6, 1], gap="small")
     
     with c_nav:
         # Render fixed header markup. The CSS above makes .nav-container fixed and prevents overlap.
