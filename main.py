@@ -1,5 +1,4 @@
 # main.py — Professional Agentic AI Website Builder (Cloud Compatible Version)
-# UI/CSS/JS changes only — no backend or logic modifications.
 
 import streamlit as st
 import os
@@ -46,347 +45,151 @@ if st.query_params.get("nav") == "home":
     st.rerun()
 
 # -------------------------------------------------------
-# 1. CSS, JS & Styling (UI only)
+# 1. CSS & Styling
 # -------------------------------------------------------
-def load_custom_css_and_js():
-    # CSS: header sticky, popover and button styles, neon glow for chat box
-    # JS: Makes the NexaBot popover open button movable via double-click/double-tap then drag.
-    st.markdown(
-    """
+def load_custom_css():
+    st.markdown("""
     <style>
-    :root{
-        --bg-color:#0d1117;
-        --card-bg:#161b22;
-        --border-color:#30363d;
-        --neon-cyan:#00f3ff;
-        --neon-purple:#bc13fe;
-        --text-primary:#c9d1d9;
-        --text-white:#ffffff;
-        --streamlit-header-height:56px; /* adjust if needed */
-        --nav-offset: calc(var(--streamlit-header-height) + 12px);
-        --nav-height: 64px;
-        --nav-z: 1050;
-        --popover-z: 2150;
-        --max-content-width:1200px;
-    }
+        /* --- Global Variables --- */
+        :root {
+            --bg-color: #0d1117; 
+            --card-bg: #161b22; 
+            --border-color: #30363d;
+            --neon-cyan: #00f3ff;
+            --neon-purple: #bc13fe;
+            --text-primary: #c9d1d9;
+            --text-white: #ffffff;
+            --vscode-bg: #1e1e1e;
+            --vscode-fg: #d4d4d4;
+        }
 
-    /* Global app and spacing - add top padding for sticky header */
-    .stApp {
-        background-color: var(--bg-color);
-        color: var(--text-primary);
-        padding-top: calc(var(--nav-offset) + var(--nav-height) + 12px);
-    }
-    .block-container{
-        max-width: var(--max-content-width);
-        margin-left:auto; margin-right:auto; padding-left:20px; padding-right:20px;
-    }
-    h1,h2,h3{ color:var(--text-white) !important; font-family: 'Inter', sans-serif; }
+        .stApp { background-color: var(--bg-color); color: var(--text-primary); }
+        h1, h2, h3 { color: var(--text-white) !important; font-family: 'Inter', sans-serif; }
+        
+        /* --- Navbar Container --- */
+        .nav-container {
+            background: rgba(22, 27, 34, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 10px;
+        }
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex; align-items: center; gap: 10px;
+        }
 
-    /* Sticky Header */
-    .nav-container{
-        position: fixed;
-        top: var(--nav-offset);
-        left: 50%;
-        transform: translateX(-50%);
-        width: calc(100% - 40px);
-        max-width: var(--max-content-width);
-        z-index: var(--nav-z);
-        height: var(--nav-height);
-        background: linear-gradient(180deg, rgba(22,27,34,0.98), rgba(16,20,24,0.9));
-        backdrop-filter: blur(8px);
-        border: 1px solid var(--border-color);
-        padding: 12px 20px;
-        display:flex; align-items:center; justify-content:space-between;
-        border-radius:12px;
-        box-shadow:0 6px 24px rgba(0,0,0,0.6);
-    }
-    .nav-logo{
-        font-size:1.25rem; font-weight:800;
-        background:linear-gradient(90deg,var(--neon-cyan),var(--neon-purple));
-        -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-        display:flex; gap:10px; align-items:center;
-    }
-    .nav-links{ display:flex; gap:22px; align-items:center; }
-    .nav-links a{
-        color:#c9d1d9; text-decoration:none; font-size:0.95rem; font-weight:700;
-        padding:6px 10px; border-radius:8px; transition:all 0.25s ease;
-    }
-    .nav-links a:hover{
-        color:#000; background:var(--neon-cyan); transform:translateY(-2px) scale(1.03);
-        box-shadow:0 8px 30px rgba(0,243,255,0.12);
-    }
+        /* --- Nav Links --- */
+        .nav-links { display: flex; gap: 30px; }
+        .nav-links a {
+            color: #c9d1d9; text-decoration: none; font-size: 1rem; font-weight: 600;
+            transition: all 0.3s ease; display: inline-block;
+        }
+        .nav-links a:hover {
+            color: #00f3ff; text-shadow: 0 0 10px #00f3ff;
+            transform: scale(1.2); text-decoration: underline; text-underline-offset: 6px;
+        }
 
-    /* Buttons: generic consistency */
-    .stButton>button,
-    [data-testid="stFormSubmitButton"] > button,
-    button[data-testid="stPopoverOpenButton"],
-    button[aria-label*="NexaBot"],
-    button[title*="NexaBot"]{
-        background-color: var(--neon-cyan) !important;
-        color: #000 !important;
-        border:none !important;
-        font-weight:800 !important;
-        padding:8px 14px !important;
-        border-radius:10px !important;
-        transition: all 0.18s ease-in-out !important;
-        box-shadow: 0 6px 18px rgba(0,243,255,0.06) !important;
-    }
-    .stButton>button:hover,
-    [data-testid="stFormSubmitButton"] > button:hover,
-    button[data-testid="stPopoverOpenButton"]:hover,
-    button[aria-label*="NexaBot"]:hover{
-        transform:translateY(-2px) scale(1.03) !important;
-        box-shadow:0 0 30px rgba(0,243,255,0.18) !important;
-    }
+        .footer-container {
+            margin-top: 50px;
+            padding: 30px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            background: var(--card-bg);
+            font-size: 0.9rem;
+        }
+        .footer-link {
+            color: var(--neon-cyan);
+            text-decoration: none;
+            font-weight: bold;
+        }
 
-    /* Ensure the popover button (and inner svg/text) adopt our colors */
-    button[data-testid="stPopoverOpenButton"] span,
-    button[aria-label*="NexaBot"] span,
-    button[data-testid="stPopoverOpenButton"] svg,
-    button[aria-label*="NexaBot"] svg,
-    [data-testid="stPopover"] > button svg,
-    [data-testid="stPopover"] > button span{
-        color:#000 !important; fill:#000 !important;
-    }
+        /* --- BUTTONS (Launch Team & Ask AI) --- */
+        /* Force high contrast: Cyan Background, Black Text */
+        
+        /* 1. Ask AI Popover Button */
+        /* --- FIX: NexaBot Top Right Button --- */
+        [data-testid="stPopover"] > button {
+            background-color: var(--neon-cyan) !important;
+            color: #000000 !important;  /* BLACK TEXT for visibility */
+            border: none !important;
+            font-weight: 900 !important;
+            padding: 8px 18px !important;
+            border-radius: 8px !important;
+            box-shadow: 0 0 12px rgba(0, 243, 255, 0.4) !important;
+            transition: all 0.3s ease-in-out;
+        }
 
-    /* Popover container and body should be above the nav */
-    div[data-testid="stPopover"]{
-        z-index: calc(var(--popover-z) + 1) !important;
-        position: relative !important;
-    }
-    div[data-testid="stPopoverBody"]{
-        z-index: calc(var(--popover-z) + 2) !important;
-        background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,250,250,0.96));
-        color:#000;
-        border-radius:12px;
-        padding:12px !important;
-        margin-top:8px !important;
-        box-shadow: 0 12px 60px rgba(0,0,0,0.45), 0 0 30px rgba(0,243,255,0.12) !important;
-        border:1px solid rgba(0,243,255,0.12) !important;
-    }
+        /* Hover effect like Generate button */
+        [data-testid="stPopover"] > button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px var(--neon-cyan) !important;
+            background-color: var(--neon-cyan) !important;
+            color: #000000 !important;
+        }
 
-    /* Neon glowing border for central chat box inside popover */
-    div[data-testid="stPopoverBody"] .stChat,
-    div[data-testid="stPopoverBody"] .stChatMessageBlock,
-    div[data-testid="stPopoverBody"] div[data-testid="stChatMessageContent"]{
-        border-radius:12px !important;
-        box-shadow:
-            0 2px 0 rgba(0,0,0,0.6) inset,
-            0 8px 30px rgba(0,0,0,0.6),
-            0 0 20px rgba(0,243,255,0.14),
-            0 0 6px rgba(0,243,255,0.28);
-        border:1px solid rgba(0,243,255,0.28) !important;
-        background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,250,250,0.96)) !important;
-    }
-    div[data-testid="stPopoverBody"] div[data-testid="stChatMessageContent"] p{
-        color:#001019 !important; font-weight:500 !important;
-    }
-    div[data-testid="stPopoverBody"] textarea:focus,
-    div[data-testid="stPopoverBody"] input:focus{
-        outline:none !important;
-        box-shadow: 0 0 24px rgba(0,243,255,0.32) !important;
-        border:1px solid rgba(0,243,255,0.4) !important;
-    }
+        /* 2. Form Submit Button (Launch Team) */
+        [data-testid="stFormSubmitButton"] > button {
+            background-color: var(--neon-cyan) !important;
+            color: #000000 !important;
+            border: none !important;
+            font-weight: 900 !important;
+            width: 100%;
+        }
+        [data-testid="stFormSubmitButton"] > button:hover {
+            box-shadow: 0 0 15px var(--neon-cyan);
+            transform: scale(1.02);
+        }
 
-    /* Make sure the floating button when positioned uses pointer cursor */
-    #nexabot-floating-btn {
-        cursor: grab !important;
-        touch-action: none; /* handle touches ourselves */
-    }
-    #nexabot-floating-btn.dragging { cursor: grabbing !important; }
+        /* 3. Generic Buttons */
+        .stButton > button {
+            background-color: var(--neon-cyan) !important;
+            color: #000000 !important;
+            border: none; font-weight: bold;
+        }
 
-    /* Small visual indicator when in "move" mode */
-    #nexabot-floating-btn[data-move="true"] {
-        box-shadow: 0 0 36px rgba(0,243,255,0.25) !important;
-        transform: scale(1.02) !important;
-        border-radius: 12px !important;
-    }
+        /* --- FORM & LABELS FIXES --- */
+        
+        /* Style the Form Container to look like a card */
+        [data-testid="stForm"] {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #30363d;
+        }
+
+        /* Make 'Describe your project' Label White */
+        div[data-testid="stWidgetLabel"] p {
+            color: #ffffff !important;
+            font-size: 1rem !important;
+            font-weight: 600 !important;
+        }
+        div[data-testid="stWidgetLabel"] label {
+            color: #ffffff !important;
+        }
+
+        /* --- Chat Popup Internals --- */
+        div[data-testid="stChatMessageContent"] p { color: #333333 !important; font-weight: 500; }
+        div[data-testid="stPopoverBody"] textarea { background-color: #f0f2f6 !important; color: black !important; }
+        div[data-testid="stPopoverBody"] button[kind="primary"] { background-color: var(--neon-cyan) !important; border: none !important; }
+        div[data-testid="stPopoverBody"] button[kind="primary"] svg { fill: black !important; }
+
+        [data-testid="stSidebar"] { background-color: #010409; border-right: 1px solid #30363d; }
     </style>
-
-    <!-- JS: make NexaBot popover button movable via double-click/double-tap and drag -->
-    <script>
-    (function(){
-        const SELECTORS = [
-            'button[data-testid="stPopoverOpenButton"]',
-            'button[aria-label*="NexaBot"]',
-            'button[title*="NexaBot"]',
-            '[data-testid="stPopover"] > button'
-        ];
-
-        const STORAGE_KEY = 'nexabot_position_v1';
-        const MOVE_FLAG = 'nexabot_move_enabled_v1';
-        const POLL_INTERVAL = 300;
-        const DOUBLE_TAP_MS = 350;
-
-        function findBtn(){
-            for(const s of SELECTORS){
-                const el = document.querySelector(s);
-                if(el) return el;
-            }
-            return null;
-        }
-
-        function applyFloatingStyle(btn){
-            btn.id = 'nexabot-floating-btn';
-            // Make fixed so we can move it anywhere
-            btn.style.position = 'fixed';
-            btn.style.zIndex = (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--popover-z')) || 2150) + 10;
-            btn.style.right = '24px';
-            btn.style.top = 'calc(var(--nav-offset) + 8px)';
-            btn.style.transition = 'none';
-            btn.setAttribute('data-move', 'false');
-            // Ensure icons/text inside show our colors
-            btn.querySelectorAll('svg, span').forEach(i => {
-                try { i.style.color = '#000'; i.style.fill = '#000'; } catch(e){}
-            });
-        }
-
-        function restorePosition(btn){
-            try{
-                const raw = localStorage.getItem(STORAGE_KEY);
-                if(!raw) return;
-                const pos = JSON.parse(raw);
-                if(typeof pos.left === 'number' && typeof pos.top === 'number'){
-                    btn.style.left = pos.left + 'px';
-                    btn.style.top = pos.top + 'px';
-                    btn.style.right = 'auto';
-                }
-            }catch(e){}
-        }
-
-        function savePosition(btn){
-            try{
-                const rect = btn.getBoundingClientRect();
-                const pos = { left: rect.left, top: rect.top };
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(pos));
-            }catch(e){}
-        }
-
-        function enableMoveHandling(btn){
-            let dragging = false;
-            let dragOffset = {x:0,y:0};
-            let lastTap = 0;
-            let moveEnabled = false;
-
-            // Allow double-click / double-tap to toggle move mode.
-            btn.addEventListener('click', (ev) => {
-                const now = Date.now();
-                if(now - lastTap < DOUBLE_TAP_MS){
-                    // double tap/click detected
-                    moveEnabled = !moveEnabled;
-                    btn.setAttribute('data-move', moveEnabled ? 'true' : 'false');
-                    // store flag
-                    try { localStorage.setItem(MOVE_FLAG, moveEnabled ? '1' : '0'); } catch(e){}
-                }
-                lastTap = now;
-            }, {passive:true});
-
-            // pointer events for mouse & touch
-            btn.addEventListener('pointerdown', (ev) => {
-                // Only allow dragging when move mode enabled (to avoid accidental drags)
-                const stored = localStorage.getItem(MOVE_FLAG);
-                const storedFlag = stored === '1' ? true : false;
-                if(!(storedFlag || btn.getAttribute('data-move') === 'true')) return;
-                ev.preventDefault();
-                btn.classList.add('dragging');
-                dragging = true;
-                btn.setPointerCapture(ev.pointerId);
-                const rect = btn.getBoundingClientRect();
-                dragOffset.x = ev.clientX - rect.left;
-                dragOffset.y = ev.clientY - rect.top;
-            });
-
-            btn.addEventListener('pointermove', (ev) => {
-                if(!dragging) return;
-                ev.preventDefault();
-                let left = ev.clientX - dragOffset.x;
-                let top = ev.clientY - dragOffset.y;
-                // keep onscreen boundaries
-                const pad = 8;
-                left = Math.max(pad, Math.min(left, window.innerWidth - btn.offsetWidth - pad));
-                top = Math.max(pad, Math.min(top, window.innerHeight - btn.offsetHeight - pad));
-                btn.style.left = left + 'px';
-                btn.style.top = top + 'px';
-                btn.style.right = 'auto';
-            });
-
-            btn.addEventListener('pointerup', (ev) => {
-                if(!dragging) return;
-                ev.preventDefault();
-                dragging = false;
-                btn.classList.remove('dragging');
-                try{ btn.releasePointerCapture(ev.pointerId); }catch(e){}
-                savePosition(btn);
-            });
-
-            // If user resizes window, keep button within bounds
-            window.addEventListener('resize', () => {
-                const rect = btn.getBoundingClientRect();
-                const pad = 8;
-                let left = rect.left;
-                let top = rect.top;
-                left = Math.max(pad, Math.min(left, window.innerWidth - btn.offsetWidth - pad));
-                top = Math.max(pad, Math.min(top, window.innerHeight - btn.offsetHeight - pad));
-                btn.style.left = left + 'px';
-                btn.style.top = top + 'px';
-                btn.style.right = 'auto';
-                savePosition(btn);
-            });
-        }
-
-        // Repeatedly attempt to find the button and apply handlers (handles Streamlit re-renders)
-        let initialized = false;
-        const observer = new MutationObserver(() => {
-            const btn = findBtn();
-            if(!btn) return;
-            // If we already set up the ID and handlers on the same node, skip.
-            if(btn.id === 'nexabot-floating-btn' && initialized) return;
-
-            applyFloatingStyle(btn);
-            restorePosition(btn);
-            enableMoveHandling(btn);
-
-            // Ensure the popover body is above the nav when opened (extra safety)
-            const popBody = document.querySelector('div[data-testid="stPopoverBody"]');
-            if(popBody){
-                popBody.style.zIndex = (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--popover-z')) || 2150) + 20;
-                popBody.style.position = 'relative';
-            }
-
-            initialized = true;
-        });
-
-        // Start observing the app container for changes (Streamlit re-renders)
-        const root = document.querySelector('#root') || document.body;
-        observer.observe(root, { childList: true, subtree: true });
-
-        // Also poll initially (in case MutationObserver missed initial render)
-        setInterval(() => {
-            const btn = findBtn();
-            if(btn && btn.id !== 'nexabot-floating-btn'){
-                applyFloatingStyle(btn);
-                restorePosition(btn);
-                enableMoveHandling(btn);
-            }
-        }, POLL_INTERVAL);
-
-        // On load: read and set move mode from storage
-        try {
-            const stored = localStorage.getItem(MOVE_FLAG);
-            if(stored === '1'){
-                const existing = document.getElementById('nexabot-floating-btn');
-                if(existing) existing.setAttribute('data-move', 'true');
-            }
-        } catch(e){}
-    })();
-    </script>
     """, unsafe_allow_html=True)
-
-load_custom_css_and_js()
+load_custom_css()
 
 # -------------------------------------------------------
 # 2. Helper Functions
 # -------------------------------------------------------
+
 def sanitize_files(data):
     flat_files = {}
     def recurse(obj, path=""):
@@ -413,7 +216,7 @@ if "session_id" not in st.session_state: st.session_state.session_id = str(uuid.
 if "nexabot_history" not in st.session_state: st.session_state.nexabot_history = []
 
 # -------------------------------------------------------
-# 3. UI Components (unchanged behavior)
+# 3. UI Components
 # -------------------------------------------------------
 def render_header():
     logo_html = "⚡ NexaBuild"
@@ -425,17 +228,16 @@ def render_header():
                     encoded_string = base64.b64encode(f.read()).decode()
                 ext = logo_file.split('.')[-1].lower()
                 mime_type = f"image/{'svg+xml' if ext == 'svg' else ext}"
-                logo_html = f'<img src="data:{mime_type};base64,{encoded_string}" style="height: 36px; border-radius: 6px; margin-right:8px;"> NexaBuild'
+                logo_html = f'<img src="data:{mime_type};base64,{encoded_string}" style="height: 40px; border-radius: 6px;"> NexaBuild'
             except Exception as e:
                 print(f"Error loading logo: {e}")
 
     c_nav, c_bot = st.columns([6, 1], gap="small")
+    
     with c_nav:
         st.markdown(f"""
         <div class="nav-container">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <div class="nav-logo">{logo_html}</div>
-            </div>
+            <div class="nav-logo">{logo_html}</div>
             <div class="nav-links">
                 <a href="?nav=home" target="_self">Home</a>
                 <a href="#">About</a>
@@ -443,9 +245,9 @@ def render_header():
             </div>
         </div>
         """, unsafe_allow_html=True)
-
+        
     with c_bot:
-        # Chatbot Button (Streamlit popover) - behavior unchanged.
+        # Chatbot Button
         with st.popover("🤖 NexaBot", use_container_width=True):
             st.caption("Hey Buddy! Do you need help? Ask NexaBot")
             for msg in st.session_state.nexabot_history:
@@ -476,7 +278,7 @@ def render_footer():
         <p>Made with ❤️ by the NexaBuild team</p>
         <p>If you need help, look at the top-right corner — NexaBot is always ready for you</p>
         <p>Need help? <a href="mailto:ahmedaqib152@gmail.com" class="footer-link">Contact Support (nexabuild@gmail.com)</a></p>
-        <p style="font-size: 0.8rem; color: #9ca3af; margin-top: 10px;">© 2025 NexaBuild. All rights reserved</p>
+        <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">© 2025 NexaBuild. All rights reserved</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -489,20 +291,21 @@ def render_home():
     with c2:
         st.markdown("""
             <div style='text-align: center; margin-bottom: 40px;'>
-                <h1 style="font-size: 3.5rem; font-weight: 900; letter-spacing: -0.03em; line-height: 1.05; margin-bottom:1rem; 
+                <h1 style="font-size: 4rem; font-weight: 900; letter-spacing: -0.03em; line-height: 1.1; margin-bottom:1rem; 
                     color: #00ffff;
                     text-shadow: 0 0 2px #00ffff, 0 0 5px #00ffff, 0 0 10px #00ffff;
-                    -webkit-text-stroke: 0.8px #000;
-                    text-stroke: 0.8px #000;">
+                    -webkit-text-stroke: 1px #000;
+                    text-stroke: 1px #000;">
                     Build something <br> Unbelievable
                 </h1>
-                <p style="font-size: 1.05rem; color: #94a3b8; max-width: 720px; margin: 0 auto;">
+                <p style="font-size: 1.25rem; color: #94a3b8; max-width: 600px; margin: 0 auto;">
                     The AI Website Builder that thinks like a developer. <br>
                     From idea to full-stack app in seconds.
                 </p>
             </div>
             """, unsafe_allow_html=True)
 
+        
         with st.form("create_form"):
             prompt = st.text_area("Describe your project", height=150,
                                   placeholder="E.g., A Todo app where I can add, delete and save tasks permanently.")
@@ -533,9 +336,11 @@ def render_workspace():
     if st.session_state.files:
         st.session_state.files = sanitize_files(st.session_state.files)
 
+
     render_header()
     st.subheader("🛠️ Developer Workspace")
     st.markdown("---")
+
 
     with st.sidebar:
         st.subheader("💬 Team Chat")
@@ -620,9 +425,9 @@ def render_workspace():
 
         # Download Box
         st.markdown("""
-        <div class="glass-card" style="border-left: 4px solid var(--neon-cyan); padding:14px; border-radius:8px; background: rgba(255,255,255,0.02);">
-            <h4 style="margin-bottom:6px;">Download Source Code</h4>
-            <p style="margin-top:0; color:#9aa6b2;">Get the full source code as a ZIP file to use locally or upload to Netlify/Vercel.</p>
+        <div class="glass-card" style="border-left: 4px solid var(--neon-cyan);">
+            <h4>  Download Source Code</h4>
+            <p>   Get the full source code as a ZIP file to use locally or upload to Netlify/Vercel.</p>
         </div>
         """, unsafe_allow_html=True)
 
