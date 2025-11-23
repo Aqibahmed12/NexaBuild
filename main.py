@@ -108,7 +108,7 @@ def load_custom_css():
             color: #ffffff !important;
             text-shadow: 0 0 8px var(--neon-cyan);
             transform: scale(1.05);
-            border-color: #ffffff !important;
+            border-color: #00f3ff !important;
         }
 
         /* --- 2. CHAT POPUP VISIBILITY FIXES --- */
