@@ -14,7 +14,7 @@ class NexaBot:
         except Exception:
             pass
         if not api_key:
-            api_key = os.environ.get("API_KEY", "")
+            api_key = os.environ.get("API_KEY") or os.environ.get("GOOGLE_API_KEY", "")
 
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel("gemini-2.0-flash")
