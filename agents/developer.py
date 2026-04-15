@@ -25,13 +25,18 @@ class Developer(BaseAgent):
         - CSS: Use the `styles.css` file for all custom styling.
 
         OUTPUT FORMAT:
-        Return a JSON object where keys are filenames.
+        Output each file wrapped in an XML-like tag. DO NOT use JSON. DO NOT use markdown codeblock ticks.
         Example:
-        {{
-            "index.html": "...",
-            "styles.css": "...",
-            "script.js": "// Contains all logic and localStorage handling\\n..."
-        }}
+        <file name="index.html">
+        ...
+        </file>
+        <file name="styles.css">
+        ...
+        </file>
+        <file name="script.js">
+        // Contains all logic and localStorage handling
+        ...
+        </file>
         """
 
         prompt = f"""
@@ -40,16 +45,23 @@ class Developer(BaseAgent):
 
         Generate the files. Build a fully functional, data-driven application using Client-Side Storage.
         """
-        return self.call_ai(system, prompt)
+        return self.call_ai(system, prompt, output_format="xml")
 
     def modify_code(self, user_msg, current_files):
         system = """
         You are a Senior Developer. Update the code based on the request.
         Maintain the Client-Side architecture (LocalStorage).
         Do NOT add external API calls.
+        
+        OUTPUT FORMAT:
+        Output the complete content of any modified or new files wrapped in XML-like tags. DO NOT use JSON. DO NOT use markdown codeblock ticks.
+        Example:
+        <file name="index.html">
+        ...
+        </file>
         """
         prompt = f"""
         Request: {user_msg}
         Current Files: {json.dumps(current_files)}
         """
-        return self.call_ai(system, prompt)
+        return self.call_ai(system, prompt, output_format="xml")

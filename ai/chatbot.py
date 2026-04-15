@@ -6,9 +6,18 @@ import os
 class NexaBot:
     def __init__(self):
 
-        api_key = st.secrets["API_KEY"]
+        # Safe API Key Fallback
+        api_key = None
+        try:
+            if "API_KEY" in st.secrets:
+                api_key = st.secrets["API_KEY"]
+        except Exception:
+            pass
+        if not api_key:
+            api_key = os.environ.get("API_KEY", "")
+
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel("gemini-2.5-flash")
+        self.model = genai.GenerativeModel("gemini-2.0-flash")
 
         self.system_prompt = """
         You are NexaBot, the friendly and intelligent assistant for NexaBuild.

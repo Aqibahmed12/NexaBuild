@@ -100,12 +100,9 @@ class ProjectManager:
             for filename in files:
                 # Update the UI to show exactly which file is being "written"
                 self._render_status(status_box, "Senior Developer", f"Writing {filename}...", "#00ff99", "👨‍💻")
-                # Add a small delay so the user can see it happen
-                time.sleep(0.7)
 
             # Final connection step
             self._render_status(status_box, "Senior Developer", "Connecting Universal Backend API...", "#00ff99", "🔌")
-            time.sleep(0.8)
 
         # Clear the animation when done
         status_box.empty()
@@ -127,7 +124,6 @@ class ProjectManager:
             # Simulate applying changes to specific files
             for filename in result:
                 self._render_status(status_box, "Senior Developer", f"Updating {filename}...", "#ffaa00", "🛠️")
-                time.sleep(0.5)
 
         status_box.empty()
         return result
