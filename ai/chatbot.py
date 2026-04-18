@@ -17,7 +17,7 @@ class NexaBot:
             api_key = os.environ.get("API_KEY") or os.environ.get("GOOGLE_API_KEY", "")
 
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel("gemini-2.0-flash")
+        self.model = genai.GenerativeModel("gemini-2.5-flash")
 
         self.system_prompt = """
         You are NexaBot, the friendly and intelligent assistant for NexaBuild.
@@ -26,9 +26,7 @@ class NexaBot:
         1. **What is NexaBuild?**: A professional AI Website Builder that creates modern, high-performance web apps (HTML/JS) using a multi-agent AI team (Product Manager, Designer, Developer).
         2. **Creators (The Team)**: 
            - Aqib Ahmed
-           - Sanaullah
            - Komal
-           - Tahir
         3. **Origin**: Created specifically for the **HEC Generative AI Hackathon**.
         4. **Technology**: Powered by Google Gemini 2.5 Flash, Streamlit, and Python.
            - **Architecture**: It uses a robust **Client-Side Architecture**. Apps run entirely in the browser and use **LocalStorage** for the database. This makes them instant to deploy and crash-proof.
