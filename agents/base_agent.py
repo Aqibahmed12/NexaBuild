@@ -6,7 +6,7 @@ import streamlit as st
 
 
 class BaseAgent:
-    def __init__(self, model_name="gemini-2.0-flash"):
+    def __init__(self, model_name="gemini-2.5-flash"):
         
         # Safe API Key Fallback
         api_key = None
