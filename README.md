@@ -112,9 +112,7 @@ The app should open locally (usually at http://localhost:8501).
 ## 👥 Team
 
 - Aqib Ahmed — Lead Developer & AI Architect  
-- Sanaullah — Frontend & UI/UX  
-- Komal — Documentation & Research  
-- Tahir — Support
+- Komal — Documentation & Research 
 
 ---
 
